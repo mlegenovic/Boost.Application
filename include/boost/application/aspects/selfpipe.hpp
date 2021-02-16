@@ -91,7 +91,7 @@ namespace boost::application {
 
          void poke()
          {
-            write(fd_[writefd], "", 1);
+            ignore_result(write(fd_[writefd], "", 1));
          }
 
       private:

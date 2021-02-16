@@ -9,7 +9,7 @@ option(BUILD_EXAMPLES "Build example code" OFF)
 
 find_package(Boost REQUIRED COMPONENTS thread unit_test_framework)
 
-add_compile_options(-Wall -Wextra -Werror -pedantic -pedantic-errors)
+add_compile_options(-Wall -Wextra -Werror -pedantic -pedantic-errors -Wunused-result)
 
 if (ADDRESS_SANITIZER)
     add_compile_options(-fsanitize=address)

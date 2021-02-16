@@ -109,9 +109,9 @@ namespace boost::application::detail {
 
       void redirect_fds(boost::system::error_code &ec)
       {
-         (void) close(0);
-         (void) close(1);
-         (void) close(2);
+         ignore_result(close(0));
+         ignore_result(close(1));
+         ignore_result(close(2));
 
          if (open("/dev/null", O_RDWR) != 0)
          {
@@ -121,8 +121,8 @@ namespace boost::application::detail {
             return;
          }
 
-         (void) dup(0);
-         (void) dup(0);
+         ignore_result(dup(0));
+         ignore_result(dup(0));
       }
 
       int do_fork()
@@ -174,7 +174,7 @@ namespace boost::application::detail {
             if(!nochdir)
             {
                // go to a neutral corner. 
-               chdir("/");
+               status = chdir("/");
             }
 
             if(!noclose)
@@ -293,9 +293,9 @@ namespace boost::application::detail {
 
          // Attach file descriptors 0, 1, and 2 to /dev/null.
 
-         open("/dev/null", O_RDWR);
-         dup(0);
-         dup(0);
+         ignore_result(open("/dev/null", O_RDWR));
+         ignore_result(dup(0));
+         ignore_result(dup(0));
 
          // clear any inherited file mode creation mask
          umask(0);

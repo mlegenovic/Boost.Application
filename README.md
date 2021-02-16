@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 
    // to handle args
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    // my server instantiation
 

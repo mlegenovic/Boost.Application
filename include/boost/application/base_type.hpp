@@ -11,6 +11,9 @@
 
 namespace boost::application {
 
+   template<typename ... Args>
+   void ignore_result(Args && ...) { }
+
    // use it if you want indicate to 'launch' that 'CustomType' is not necessary
    // int launch(Application& app, CustomType& ct, ...
    struct not_necessary {};
