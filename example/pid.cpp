@@ -14,8 +14,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -36,24 +34,21 @@ public:
    {
       std::cout << "Test" << std::endl;
 
-      boost::shared_ptr<application::process_id> pid 
-         = context_.find<application::process_id>();
+      auto pid = context_.find<application::process_id>();
 
-      std::cout << "pid : " << pid->pid()      << std::endl;
-
+      std::cout << "pid : " << pid->pid() << std::endl;
 
       return 0;
    }
 
 private:
    application::context& context_;
-
 };
 
 // main
 
-int main(int argc, char *argv[])
-{      
+int main(int /*argc*/, char */*argv*/[])
+{
    application::context app_context;
    myapp app(app_context);
 

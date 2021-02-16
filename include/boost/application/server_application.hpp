@@ -1,25 +1,16 @@
-// server_application.hpp ----------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 10-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_SERVER_APPLICATION_HPP
 #define BOOST_APPLICATION_SERVER_APPLICATION_HPP
+
+#include <memory>
 
 // application
 #include <boost/application/config.hpp>
 #include <boost/application/context.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/application_mode_register.hpp>
 
 // internal aspects
@@ -37,7 +28,7 @@
 #   error "Sorry, no boost application are available for this platform."
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief This class hold a 'server' application mode system.
@@ -90,25 +81,24 @@ namespace boost { namespace application {
 
          if(!context.find<run_mode>())
              context.insert<run_mode>(
-               csbl::make_shared<run_mode>(mode()));
+               std::make_shared<run_mode>(mode()));
 
          if(!context.find<status>())
              context.insert<status>(
-               csbl::make_shared<status>(status::running));
+               std::make_shared<status>(status::running));
 
          if(!context.find<process_id>())
               context.insert<process_id>(
-               csbl::make_shared<process_id>());
-               
+               std::make_shared<process_id>());
+
          if(!context.find<path>())
               context.insert<path>(
-               csbl::make_shared<path>());
-               
+               std::make_shared<path>());
+
          // need be created after run_mode, status
 
-         impl_.reset(new server_application_impl(
-            boost::bind( &Application::operator(), &myapp), sm,
-            context, ec));
+         impl_.reset(new detail::server_application_impl(
+            [&myapp] { return myapp(); }, sm, context, ec));
       }
 
       /*!
@@ -129,10 +119,9 @@ namespace boost { namespace application {
 
    private:
 
-      csbl::shared_ptr<server_application_impl> impl_;
+      std::shared_ptr<detail::server_application_impl> impl_;
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_SERVER_APPLICATION_HPP
-

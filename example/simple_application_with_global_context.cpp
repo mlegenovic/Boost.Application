@@ -15,8 +15,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 //[intro_global_context
 
 #include <iostream>
@@ -40,20 +38,16 @@ public:
    /*<<Define the application operator (singleton, no param)>>*/
    int operator()()
    {
-      BOOST_APPLICATION_FEATURE_SELECT
-
       std::cout << "Test" << std::endl;
-      shared_ptr<application::args> myargs 
-         = this_application()->find<application::args>();
+      auto myargs = this_application()->find<application::args>();
 
       if (myargs)
       {
          const std::vector<std::string> &arg_vector = myargs->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 
@@ -78,7 +72,7 @@ int main(int argc, char *argv[])
  
    /*<<Add an aspect for future use. An 'aspect' can be customized, or new aspects can be created>>*/ 
    this_application()->insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    /*<<Start the application on the desired mode (common, server)>>*/  
    int ret = application::launch<application::common>(app, this_application());
@@ -89,4 +83,3 @@ int main(int argc, char *argv[])
    return ret;
 }
 //]
-

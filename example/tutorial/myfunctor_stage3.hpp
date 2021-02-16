@@ -10,8 +10,6 @@
 // can be compiled.
 //
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -49,4 +47,3 @@ private:
 };
 
 //]
-

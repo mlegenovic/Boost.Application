@@ -11,8 +11,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <sstream>
 
@@ -92,11 +90,11 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
-{  
+int main(int /*argc*/, char */*argv*/[])
+{
    try 
    {
-      application::context app_context;      
+      application::context app_context;
       myapp app(app_context);
 
       // app_context.insert<application::args>(

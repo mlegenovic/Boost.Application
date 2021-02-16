@@ -17,7 +17,6 @@
 #define BOOST_APPLICATION_APPLICATION_INITIALIZERS_HPP
 
 #include <boost/application/config.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/application/base_type.hpp>
 
 namespace boost { namespace application {
@@ -47,7 +46,7 @@ namespace boost { namespace application {
    }
 
    inline setup_type<character_types::string_type>
-      setup_arg(const boost::filesystem::path &p)
+      setup_arg(const csbl::filesystem::path &p)
    {
 #if defined(BOOST_APPLICATION_STD_WSTRING)
       return setup_type<character_types::string_type>(p.wstring());
@@ -59,4 +58,3 @@ namespace boost { namespace application {
 }} // boost::application
 
 #endif // BOOST_APPLICATION_SHARED_LIBRARY_INITIALIZERS_HPP
-

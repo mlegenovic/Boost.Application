@@ -14,8 +14,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -34,17 +32,15 @@ public:
    int operator()()
    {
       std::cout << "Test" << std::endl;
-      boost::shared_ptr<application::args> myargs 
-         = context_.find<application::args>();
+      auto myargs = context_.find<application::args>();
 
       if (myargs)
       {
          const std::vector<std::string> &arg_vector = myargs->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 	  
@@ -65,7 +61,7 @@ int main(int argc, char *argv[])
    myapp app(app_context);
 
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    return application::launch<application::common>(app, app_context);
 }

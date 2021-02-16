@@ -1,4 +1,4 @@
-#Boost.Application (0.4.12) [![Build Status](https://travis-ci.org/retf/Boost.Application.svg?branch=master)](https://travis-ci.org/retf/Boost.Application) [![Coverage Status](https://coveralls.io/repos/retf/Boost.Application/badge.svg?branch=master)](https://coveralls.io/r/retf/Boost.Application?branch=master)
+#Boost.Application (0.4.12)
 
 ### Caution
 
@@ -40,10 +40,9 @@ Boost.Application provides a application environment, or start point to any peop
 #define BOOST_ALL_DYN_LINK
 #define BOOST_LIB_DIAGNOSTIC
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <fstream>
+#include <thread>
 
 #include <boost/application.hpp>
 
@@ -74,22 +73,20 @@ public:
       my_log_file_ << "-----------------------------" << std::endl;
 
       // only print args on screen
-      for(std::vector<std::string>::iterator it = arg_vector.begin(); 
-         it != arg_vector.end(); ++it) {
-         my_log_file_ << *it << std::endl;
+      for(const auto& arg : arg_vector) {
+         my_log_file_ << arg << std::endl;
       }
 
       my_log_file_ << "-----------------------------" << std::endl;
 
       // run logic
 
-      boost::shared_ptr<application::status> st =          
-         context_.find<application::status>();
+      auto st = context_.find<application::status>();
 
       int count = 0;
       while(st->state() != application::status::stopped)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(1));
+         std::this_thread::sleep_for(std::chrono::seconds(1));
 
          if(st->state() == application::status::paused)
             my_log_file_ << count++ << ", paused..." << std::endl;
@@ -108,7 +105,7 @@ public:
       my_log_file_ << "Start Log..." << std::endl;
 
       // launch a work thread
-      boost::thread thread(&myapp::worker, this);
+      std::thread thread(&myapp::worker, this);
       
       context_.find<application::wait_for_termination_request>()->wait();
 
@@ -151,7 +148,7 @@ private:
 
 int main(int argc, char *argv[])
 { 
-  application::context app_context;
+   application::context app_context;
    
    // auto_handler will automatically add termination, pause and resume (windows) handlers
    application::auto_handler<myapp> app(app_context);
@@ -160,7 +157,7 @@ int main(int argc, char *argv[])
 
    // to handle args
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));  
+      boost::make_shared<application::args>(argc, argv));
 
    // my server instantiation
 
@@ -288,5 +285,3 @@ Thanks to Antony Polukhin for improvements on plug-in system module (shared_libr
 ### License
 
 Distributed under the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt).
-
-

@@ -14,10 +14,10 @@
 
 //[tutorialcpps2
 
-int main(int argc, char *argv[])
-{   
+int main(int /*argc*/, char */*argv*/[])
+{
    application::context app_context;
-   
+
    /*<< Tie stop to termination_handler using default behaviour >>*/
    application::auto_handler<myapp> app(app_context);
 
@@ -26,4 +26,3 @@ int main(int argc, char *argv[])
 }
 
 //]
-

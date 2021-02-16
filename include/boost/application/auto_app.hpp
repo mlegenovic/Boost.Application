@@ -1,18 +1,7 @@
-// auto_handler.hpp  ---------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
-
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 05-06-2014 dd-mm-yyyy - Initial Release
-//
-//
-// -----------------------------------------------------------------------------
 
 //
 // *****************************************************************************
@@ -23,18 +12,16 @@
 #ifndef BOOST_APPLICATION_AUTO_APP_HPP
 #define BOOST_APPLICATION_AUTO_APP_HPP
 
+#include <memory>
+
 // application
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/context.hpp>
 #include <boost/application/launch.hpp>
 #include <boost/application/auto_handler.hpp>
 #include <boost/application/aspects/args.hpp>
 
-namespace boost { namespace application { 
-
-
-
+namespace boost::application {
 
    /*!
     * \brief This class tie a application and context, and simplifies the 
@@ -89,7 +76,7 @@ namespace boost { namespace application {
          return ret;
       }
 
-      static int start(uuids::uuid& appid, system::error_code& ec) {
+      static int start(const uuids::uuid& appid, system::error_code& ec) {
 
         if(boost::is_same<Context, global_context>::value) {
             global_context_ptr cxt = global_context::create(ec);
@@ -109,7 +96,7 @@ namespace boost { namespace application {
          
       }
 
-      static int start(uuids::uuid& appid) {
+      static int start(const uuids::uuid& appid) {
 
          system::error_code ec; int ret = 0;
 
@@ -128,7 +115,7 @@ namespace boost { namespace application {
             if(ec) return 1;
 
             cxt->insert<args>(
-               csbl::make_shared<args>(argc, argv));  
+               std::make_shared<args>(argc, argv));
 
             auto_handler<Application> app(cxt);
             int ret = launch<ApplicationMode>(app, cxt, ec);
@@ -140,7 +127,7 @@ namespace boost { namespace application {
          context cxt;
 
          cxt.insert<args>(
-            csbl::make_shared<args>(argc, argv));  
+            std::make_shared<args>(argc, argv));
 
          auto_handler<Application> dapp(cxt);
          return launch<ApplicationMode>(dapp, cxt, ec);
@@ -157,14 +144,14 @@ namespace boost { namespace application {
          return ret;
       }
 
-      static int start(int argc, character_types::char_type *argv[], uuids::uuid& appid, system::error_code& ec) {
+      static int start(int argc, character_types::char_type *argv[], const uuids::uuid& appid, system::error_code& ec) {
           if(boost::is_same<Context, global_context>::value) {
             global_context_ptr cxt = global_context::create(ec);
 
             if(ec) return 1;
 
             cxt->insert<args>(
-               csbl::make_shared<args>(argc, argv));  
+               std::make_shared<args>(argc, argv));
 
             auto_handler<Application> app(cxt, appid);
             int ret = launch<ApplicationMode>(app, cxt, ec);
@@ -176,13 +163,13 @@ namespace boost { namespace application {
          context cxt;
 
          cxt.insert<args>(
-            csbl::make_shared<args>(argc, argv));  
+            std::make_shared<args>(argc, argv));
 
          auto_handler<Application> dapp(cxt, appid);
          return launch<ApplicationMode>(dapp, cxt, ec);
       }
 
-      static int start(int argc, character_types::char_type *argv[], uuids::uuid& appid) {
+      static int start(int argc, character_types::char_type *argv[], const uuids::uuid& appid) {
 
          system::error_code ec; int ret = 0;
          ret = auto_app<ApplicationMode, Application, Context, CustomType>::start(argc, argv, appid, ec);
@@ -194,6 +181,6 @@ namespace boost { namespace application {
       }
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_AUTO_HANDLER_HPP

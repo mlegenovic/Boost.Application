@@ -25,7 +25,7 @@ class myapp
 public:
 
    // param
-   int operator()(application::context& context)
+   int operator()()
    {
       return 0;
    }
@@ -35,7 +35,7 @@ public:
 
 //[ecver
 // ...
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {   
    myapp app;
    application::context app_context;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
    if(ec)
    {
       std::cerr << "[E] " << ec.message() 
-         << " <" << ec.value() << "> " << std::cout;
+         << " <" << ec.value() << "> " << std::endl;
    }
 
    return result;

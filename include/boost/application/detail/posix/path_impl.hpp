@@ -8,9 +8,10 @@
 #define BOOST_APPLICATION_DETAIL_POSIX_PATH_FROM_ME_HPP
 
 #include <boost/application/config.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/predef/os.h>
 
+#include <filesystem>
+#include <system_error>
 #include <cstdlib>
 #include <pwd.h>
 #include <unistd.h>
@@ -19,56 +20,56 @@
 # pragma once
 #endif
 
-namespace boost { namespace application { namespace detail {
+namespace boost::application::detail {
 
     class default_path_impl
     {
-        filesystem::path full_path_;
-        
-        boost::filesystem::path path_from_me(boost::system::error_code &ec)  {
-            return boost::filesystem::read_symlink("/proc/self/exe", ec);
+        std::filesystem::path full_path_;
+
+        std::filesystem::path path_from_me(std::error_code &ec)  {
+            return std::filesystem::read_symlink("/proc/self/exe", ec);
         }
 
-        boost::filesystem::path getenv(const char* env_name)
+        std::filesystem::path getenv(const char* env_name)
         {
             const char* res = ::getenv(env_name);
-            return res ? res : boost::filesystem::path();
+            return res ? res : std::filesystem::path();
         }
 
     public:
 
-        filesystem::path current_path(void)
+        std::filesystem::path current_path()
         {
-           return filesystem::current_path();
+           return std::filesystem::current_path();
         }
 
-        const filesystem::path& location(boost::system::error_code &ec)
+        const std::filesystem::path& location(std::error_code &ec)
         {
             if(!full_path_.empty())
                 return full_path_;
 
-            boost::filesystem::path full_path
+            std::filesystem::path full_path
                 = path_from_me(ec);
             if(ec)
-                full_path_ = boost::filesystem::path();
+                full_path_ = std::filesystem::path();
 
             full_path_ = full_path;
 
             return full_path_;
         }
 
-        const filesystem::path& location()
+        const std::filesystem::path& location()
         {
             if(!full_path_.empty())
                 return full_path_;
 
-            boost::system::error_code ec;
+            std::error_code ec;
 
             full_path_ = location(ec);
 
             if (ec) {
                 boost::throw_exception(
-                    boost::system::system_error(
+                    std::system_error(
                     ec, "location() failed"
                     ));
             }
@@ -76,9 +77,9 @@ namespace boost { namespace application { namespace detail {
             return full_path_;
         }
 
-        inline boost::filesystem::path home_path()
+        inline std::filesystem::path home_path()
         {
-            boost::filesystem::path path = getenv("HOME");
+            std::filesystem::path path = getenv("HOME");
             if(path.empty())
             {
                 struct passwd* pwd = getpwuid(getuid());
@@ -89,9 +90,9 @@ namespace boost { namespace application { namespace detail {
             return path;
         }
 
-        inline boost::filesystem::path app_data_path()
+        inline std::filesystem::path app_data_path()
         {
-            boost::filesystem::path path = getenv("XDG_DATA_HOME");
+            std::filesystem::path path = getenv("XDG_DATA_HOME");
             if(path.empty()) {
     #if BOOST_OS_MACOS
                 return home_path() / "Library/Preferences/";
@@ -102,10 +103,10 @@ namespace boost { namespace application { namespace detail {
             return path;
         }
 
-        inline boost::filesystem::path config_path()
+        inline std::filesystem::path config_path()
         {
 
-            boost::filesystem::path path = getenv("XDG_CONFIG_HOME");
+            std::filesystem::path path = getenv("XDG_CONFIG_HOME");
             if(path.empty()) {
     #if BOOST_OS_MACOS
                 return home_path() / "Library/Preferences/";
@@ -116,15 +117,15 @@ namespace boost { namespace application { namespace detail {
             return path;
         }
 
-        inline boost::filesystem::path temp_path()
+        inline std::filesystem::path temp_path()
         {
-            boost::filesystem::path path = getenv("TMPDIR");
+            std::filesystem::path path = getenv("TMPDIR");
             if(path.empty())
                 return "/tmp"; // Fallback if TMPDIR not available
             return path;
         }
     };
 
-}}} // namespace boost::dll::detail
+} // namespace boost::application::detail
 
 #endif // BOOST_APPLICATION_DETAIL_POSIX_PATH_FROM_ME_HPP

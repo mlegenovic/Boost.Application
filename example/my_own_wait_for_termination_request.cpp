@@ -14,8 +14,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -78,13 +76,13 @@ int main(int argc, char *argv[])
    myapp app(app_context);
 
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
  
    // if user do this, the default behavoiur will be ignored, 
    // and the user behaviour will be executed by application::server
    /*<< Add your custon handler to context aspect pool of application >>*/ 
    app_context.insert< application::wait_for_termination_request>(
-      shared_ptr<application::wait_for_termination_request>(
+      std::shared_ptr<application::wait_for_termination_request>(
          new wait_for_termination_request_my_behaviour));
 
    return application::launch<application::common>(app, app_context);

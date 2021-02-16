@@ -7,7 +7,8 @@
 #ifndef BOOST_APPLICATION_MODES_REGISTER_HPP
 #define BOOST_APPLICATION_MODES_REGISTER_HPP
 
-#include <boost/atomic.hpp>
+#include <atomic>
+
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
 #endif
@@ -16,7 +17,7 @@
 /// \brief Contains a template function that generate a unique identifier
 /// for each application mode
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * Creates a unique identifier generator for each application mode, e.g.: 
@@ -37,10 +38,10 @@ namespace boost { namespace application {
     */
    template <typename T>
    T new_run_mode() {
-      static boost::atomic<T> id(-1);
+      static std::atomic<T> id(-1);
       return ++id;
    }
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_MODES_REGISTER_HPP

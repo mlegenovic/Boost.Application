@@ -1,42 +1,34 @@
-// signal_binder.hpp ---------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 26-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_SIGNAL_MANAGER_HPP
 #define BOOST_APPLICATION_SIGNAL_MANAGER_HPP
 
+#include <memory>
+#include <thread>
+#include <unordered_map>
+
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 
 #include <boost/application/context.hpp>
 #include <boost/application/handler.hpp>
-
-// #include <boost/bind.hpp>
-// #include <boost/thread/thread.hpp>
 
 #include <boost/application/aspects/termination_handler.hpp>
 #include <boost/application/aspects/limit_single_instance.hpp>
 #include <boost/application/aspects/wait_for_termination_request.hpp>
 
-namespace boost { namespace application {
+namespace boost::application {
 
    // This is an attempt to make things more flexible,
    // this allow user to define your own sinal -> handler map
 
+namespace detail {
    // forward declaration.
    template <class T> class common_application_impl_;
    template <class T> class server_application_impl_;
+}
 
    /*!
     * \brief This class is the base of signal_manager class.
@@ -46,26 +38,26 @@ namespace boost { namespace application {
     */
    class signal_binder
    {
-      template<class> friend class common_application_impl_;
-      template<class> friend class server_application_impl_;
+      template<class> friend class detail::common_application_impl_;
+      template<class> friend class detail::server_application_impl_;
 
    public:
       explicit signal_binder(context &cxt)
          : signals_(io_service_)
          , context_(cxt) {
          signals_.async_wait(
-            boost::bind(&signal_binder::signal_handler, this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::signal_number));
+            [this] (const system::error_code &ec, int signal_number) {
+               signal_handler(ec, signal_number);
+            });
       }
 
       explicit signal_binder(global_context_ptr cxt)
          : signals_(io_service_)
          , context_(*cxt.get()) {
          signals_.async_wait(
-            boost::bind(&signal_binder::signal_handler, this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::signal_number));
+            [this] (const system::error_code &ec, int signal_number) {
+               signal_handler(ec, signal_number);
+            });
       }
 
       virtual ~signal_binder() {
@@ -192,8 +184,8 @@ namespace boost { namespace application {
     protected:
 
       void start() {
-         io_service_thread_.reset(new csbl::thread(
-            boost::bind(&signal_binder::run_io_service, this)));
+         io_service_thread_.reset(new std::thread(
+            [this] { run_io_service(); }));
       }
 
       void run_io_service() {
@@ -206,9 +198,9 @@ namespace boost { namespace application {
 
          // triggers again
          signals_.async_wait(
-            boost::bind(&signal_binder::signal_handler, this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::signal_number));
+            [this] (const system::error_code &ec, int signal_number) {
+               signal_handler(ec, signal_number);
+            });
       }
 
    protected:
@@ -236,12 +228,12 @@ namespace boost { namespace application {
 
       // signal < handler / handler>
       // if first handler returns true, the second handler are called
-      csbl::unordered_map<int, std::pair< handler<>, handler<> > > handler_map_;
+      std::unordered_map<int, std::pair< handler<>, handler<> > > handler_map_;
 
       asio::io_service io_service_;
       asio::signal_set signals_;
 
-      csbl::shared_ptr<csbl::thread> io_service_thread_;
+      std::shared_ptr<std::thread> io_service_thread_;
 
    protected:
 
@@ -281,15 +273,15 @@ namespace boost { namespace application {
 
    protected:
 
-      virtual csbl::shared_ptr<termination_handler>
+      virtual std::shared_ptr<termination_handler>
          setup_termination_behaviour()
       {
-         strict_lock<application::aspect_map> guard(context_);
+         std::unique_lock<application::aspect_map> guard(context_);
 
          if(!context_.find<wait_for_termination_request>(guard))
          {
             context_.insert<wait_for_termination_request>(
-               csbl::shared_ptr<wait_for_termination_request>(
+               std::shared_ptr<wait_for_termination_request>(
                   new wait_for_termination_request_default_behaviour), guard);
          }
 
@@ -300,14 +292,13 @@ namespace boost { namespace application {
 
       virtual void register_signals(boost::system::error_code& ec)
       {
-         csbl::shared_ptr<termination_handler> th
+         std::shared_ptr<termination_handler> th
             = setup_termination_behaviour();
 
          if(th)
          {
-            handler<>::callback cb
-               = boost::bind(
-               &signal_manager::termination_signal_handler, this);
+            handler<>::callback cb =
+               [this] { return termination_signal_handler(); };
 
             bind(SIGINT,  th->get_handler(), cb, ec);
             if(ec) return;
@@ -326,7 +317,7 @@ namespace boost { namespace application {
          context_.find<status>()->state(status::stopped);
 
          // remove process lock
-         csbl::shared_ptr<limit_single_instance> si
+         std::shared_ptr<limit_single_instance> si
             = context_.find<limit_single_instance>();
 
          if(si)
@@ -341,7 +332,6 @@ namespace boost { namespace application {
 
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_SIGNAL_MANAGER_HPP
-

@@ -14,8 +14,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 #include <boost/uuid/string_generator.hpp>
@@ -34,17 +32,15 @@ public:
    // param
    int operator()()
    {
-      boost::shared_ptr<application::args> args =
-         context_.find<application::args>();
+      auto args = context_.find<application::args>();
 
       if(args)
       {
-         const std::vector<std::string> &arg_vector = args->arg_vector();
+         const auto &arg_vector = args->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 
@@ -60,7 +56,7 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {   
    application::context app_context;
    myapp app(app_context);
@@ -68,7 +64,7 @@ int main(int argc, char *argv[])
    boost::uuids::string_generator gen;
 
    app_context.insert<application::limit_single_instance>(
-      boost::make_shared<application::limit_single_instance_default_behaviour>(
+      std::make_shared<application::limit_single_instance_default_behaviour>(
          gen("{2F66E4AD-ECA5-475D-8784-4BAA329EF9F1}")));
 
    return application::launch<application::common>(app, app_context);

@@ -1,23 +1,13 @@
-// wait_for_termination_request.hpp  -----------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 14-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_ASPECT_HPP
 #define BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_ASPECT_HPP
 
-#include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
+#include <memory>
+
 #if defined( BOOST_WINDOWS_API )
 #include <boost/application/detail/windows/wait_for_termination_request_impl.hpp>
 #elif defined( BOOST_POSIX_API )
@@ -26,18 +16,21 @@
 #error "Sorry, no boost application are available for this platform."
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief A contract class to be used by the user on your own
     *        class implementation of wait_for_termination_request aspect.
     *
     */
-   class wait_for_termination_request : noncopyable
+   class wait_for_termination_request
    {
    public:
-      wait_for_termination_request() {}
-      virtual ~wait_for_termination_request() {}
+      wait_for_termination_request() = default;
+      wait_for_termination_request(const wait_for_termination_request&) = delete;
+      virtual ~wait_for_termination_request() = default;
+
+      wait_for_termination_request& operator=(const wait_for_termination_request&) = delete;
 
       /*!
        * Wait for termination request that need be
@@ -63,13 +56,13 @@ namespace boost { namespace application {
    {
    public:
       wait_for_termination_request_default_behaviour()
-         : impl_(new wait_for_termination_request_impl()){}
+         : impl_(new detail::wait_for_termination_request_impl()){}
 
       /*!
        * Wait for termination request.
        *
        */
-      void wait() {
+      void wait() override {
          impl_->wait();
       }
 
@@ -77,17 +70,16 @@ namespace boost { namespace application {
        * Continue, cause wait to be relesed
        *
        */
-      void proceed() {
+      void proceed() override {
          impl_->proceed();
       }
 
    private:
 
-      csbl::shared_ptr<wait_for_termination_request_impl> impl_;
+      std::shared_ptr<detail::wait_for_termination_request_impl> impl_;
 
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_ASPECT_HPP
-

@@ -68,11 +68,10 @@ int main(int argc, char *argv[])
    // [[c]]
    /*<< Add 'args aspect' to application context >>*/
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    // [[h]]
    /*<< Launch an application using server application mode >>*/
    return application::launch<application::server>(app, app_context);
 }
 //]
-

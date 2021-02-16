@@ -14,13 +14,10 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/uuid/string_generator.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
+#include <thread>
+#include <chrono>
 
 using namespace boost::application;
 
@@ -42,7 +39,7 @@ public:
    {
       while(1)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(2));
+         std::this_thread::sleep_for(std::chrono::seconds(2));
          std::cout << "running" << std::endl;
       }
    }
@@ -68,7 +65,7 @@ public:
       // or using [wait_for_termination_request]
 
       // launch a work thread
-      boost::thread thread(boost::bind(&myapp::work_thread, this));
+      std::thread thread([this] { work_thread(); });
 
       context_.find<wait_for_termination_request>()->wait();
 
@@ -101,16 +98,15 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {
    context app_context;
    myapp app(app_context);
 
-   handler<>::callback stop
-      = boost::bind(&myapp::stop, &app);
+   handler<>::callback stop = [&app] { return app.stop(); };
 
    app_context.insert<termination_handler>(
-      boost::make_shared<termination_handler_default_behaviour>(stop));
+      std::make_shared<termination_handler_default_behaviour>(stop));
 
    return launch<common>(app, app_context);
 }

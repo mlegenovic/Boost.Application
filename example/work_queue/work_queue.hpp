@@ -9,8 +9,7 @@
 #define BOOST_APPLICATION_WORK_QUEUE_HPP
 
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 
 // work_queue class 
 // NWorkers : nuber of worker threads 
@@ -24,13 +23,13 @@ public:
    {
       work_ctrl_ = new boost::asio::io_service::work(io_service_);
 
-      int workers = boost::thread::hardware_concurrency();
+      auto workers = std::thread::hardware_concurrency();
       if(NWorkers > 0)
          workers = NWorkers;
-      
+
       for (std::size_t i = 0; i < workers; ++i)
       {
-         threads_.create_thread(boost::bind(&boost::asio::io_service::run, &io_service_));
+         threads_.create_thread([this] { io_service_.run(); });
       }
    }
 
@@ -40,11 +39,9 @@ public:
    }
 
    template <typename TTask>
-   void add_task(TTask task)
+   void add_task(TTask&& task)
    {
-      // c++11
-      // io_service_.dispatch(std::move(task));
-      io_service_.dispatch(task);
+      io_service_.dispatch(std::forward<TTask>(task));
    }
 
 private:
@@ -56,5 +53,3 @@ private:
 };
 
 #endif // BOOST_APPLICATION_WORK_QUEUE_HPP
-
-

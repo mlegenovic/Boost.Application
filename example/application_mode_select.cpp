@@ -10,8 +10,6 @@
 // application_mode_select[.exe]    (run as server daemon) (default)
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/application.hpp>
@@ -23,7 +21,7 @@ class my_application_functor_class
 {
 public:
 
-   my_application_functor_class(application::context& context)
+   explicit my_application_functor_class(application::context& context)
       : context_(context)
    {
    }
@@ -33,8 +31,7 @@ public:
       // your application logic here!
       // use ctrl to get state of your application...
 
-      boost::shared_ptr<application::run_mode> modes 
-         = context_.find<application::run_mode>();
+      auto modes = context_.find<application::run_mode>();
 
       if(modes->mode() == application::common::mode())
       {
@@ -81,11 +78,11 @@ int main(int argc, char** argv)
    
    // add termination handler
 
-   application::handler<>::callback termination_callback 
-      = boost::bind(&my_application_functor_class::stop, &app);
+   application::handler<>::callback termination_callback =
+      [&app] { return app.stop(); };
 
    app_context.insert<application::termination_handler>(
-      boost::make_shared<
+      std::make_shared<
          application::termination_handler_default_behaviour>(termination_callback));
 
    int result = 0;
@@ -110,9 +107,8 @@ int main(int argc, char** argv)
    if(ec)
    {
       std::cout << "[E] " << ec.message() 
-         << " <" << ec.value() << "> " << std::cout;
+         << " <" << ec.value() << "> " << std::endl;
    }
    
    return result;
 }
-

@@ -17,8 +17,11 @@
 #ifndef BOOST_APPLICATION_SERVER_APPLICATION_IMPL_HPP
 #define BOOST_APPLICATION_SERVER_APPLICATION_IMPL_HPP
 
+#include <memory>
+#include <functional>
+#include <thread>
+
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/base_type.hpp>
 
 #include <boost/application/aspects/termination_handler.hpp>
@@ -52,7 +55,7 @@ namespace boost { namespace application {
    public:
 
       // callback for app code
-      typedef csbl::function< int (void) > mainop;
+      typedef std::function< int (void) > mainop;
 
       // string types to be used internaly to handle unicode on windows
       typedef CharType char_type;
@@ -120,7 +123,7 @@ namespace boost { namespace application {
 
       bool stop(void)
       {
-         csbl::shared_ptr<termination_handler> th =
+         std::shared_ptr<termination_handler> th =
                context_.find<termination_handler>();
 
          if(th)
@@ -142,7 +145,7 @@ namespace boost { namespace application {
 
       bool pause(void)
       {
-         csbl::shared_ptr<pause_handler> ph =
+         std::shared_ptr<pause_handler> ph =
             context_.find<pause_handler>();
 
          if(ph)
@@ -164,7 +167,7 @@ namespace boost { namespace application {
 
       bool resume(void)
       {
-        csbl::shared_ptr<resume_handler> rh =
+        std::shared_ptr<resume_handler> rh =
            context_.find<resume_handler>();
 
          if(rh)
@@ -191,7 +194,7 @@ namespace boost { namespace application {
       // Handle SCM signals
       void service_handler(DWORD dwOpcode)
       {
-         csbl::shared_ptr<status> st =
+         std::shared_ptr<status> st =
             context_.find<status>();
 
          switch (dwOpcode)
@@ -356,9 +359,9 @@ namespace boost { namespace application {
 
       	stop();
 
-         csbl::shared_ptr<status> st =
+         std::shared_ptr<status> st =
             context_.find<status>();
-         csbl::shared_ptr<wait_for_termination_request> tr =
+         std::shared_ptr<wait_for_termination_request> tr =
             context_.find<wait_for_termination_request>();
 
          if(st) st->state(status::stopped);
@@ -414,7 +417,7 @@ namespace boost { namespace application {
          }
 
          // Launch work thread (main)
-         launch_thread_ = new csbl::thread(
+         launch_thread_ = new std::thread(
             boost::bind(&server_application_impl_::work_thread, this, dw_argc, lpsz_argv));
 
          HANDLE hevent[2];
@@ -451,7 +454,7 @@ namespace boost { namespace application {
       void work_thread(int argc, char_type** argv)
       {
          context_.exchange<application::args>(
-            csbl::make_shared<application::args>(argc, argv));
+            std::make_shared<application::args>(argc, argv));
 
          result_code_ = main_();
       }
@@ -483,7 +486,7 @@ namespace boost { namespace application {
       // the SCM. Created by RegisterServiceCtrlHandler
       SERVICE_STATUS_HANDLE service_status_handle_;
 
-      csbl::thread *launch_thread_;
+      std::thread *launch_thread_;
 
       // app code
       mainop main_;

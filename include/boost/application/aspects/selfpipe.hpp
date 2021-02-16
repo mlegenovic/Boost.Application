@@ -1,19 +1,9 @@
-// selfpipe.hpp --------------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 // Copyright 2013 Stanislav Ivochkin 
 // Part of this file was contributed by Stanislav Ivochkin 
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
-
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 08-11-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
 
 // test aspet (indev)
 
@@ -29,7 +19,7 @@
 #include <fcntl.h>
 #endif
 
-namespace boost { namespace application { 
+namespace boost::application {
 
    namespace posix {
 
@@ -37,11 +27,11 @@ namespace boost { namespace application {
        * \brief POSIX platform specific aspect that implement self-pipe trick.
        *        
        */
-      class selfpipe : noncopyable
+      class selfpipe
       {
       
       public:
-      
+
          selfpipe()
          {
             boost::system::error_code ec;
@@ -51,17 +41,20 @@ namespace boost { namespace application {
             if(ec) BOOST_APPLICATION_THROW_LAST_SYSTEM_ERROR_USING_MY_EC(
                "selfpipe() failed", ec);
          }
-         
-         selfpipe(boost::system::error_code &ec)
+
+         explicit selfpipe(boost::system::error_code &ec)
          {
             setup(ec);
          }
-         
+
+         selfpipe(const selfpipe&) = delete;
+         selfpipe& operator=(const selfpipe&) = delete;
+
          virtual ~selfpipe()
          {
             teardown();
          }
-      
+
       protected:
 
          void setup(boost::system::error_code &ec)
@@ -105,7 +98,7 @@ namespace boost { namespace application {
       
          enum { readfd = 0, writefd = 1 };
 
-         int fd_[2];
+         int fd_[2]{};
 
       }; // selfpipe
 
@@ -122,7 +115,6 @@ namespace boost { namespace application {
 #   error "Sorry, selfpipe are available for this platform."
 #endif
 
-}} // boost::application::posix
+} // boost::application::posix
 
 #endif // BOOST_APPLICATION_SELFPIPE_ASPECT_HPP
-

@@ -14,11 +14,8 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
-
 
 using namespace boost;
 
@@ -39,8 +36,7 @@ public:
       
 	    /*<< Use 'path' aspect on your logic. Note that path is added by default >>*/ 
       
-      boost::shared_ptr<application::path> path 
-         = context_.find<application::path>();
+      auto path = context_.find<application::path>();
 
       std::cout << "executable_path      : " << path->executable_path()      << std::endl;
       std::cout << "current_path         : " << path->current_path()         << std::endl;
@@ -73,7 +69,7 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {      
    application::context app_context;
    //myapp app(app_context);

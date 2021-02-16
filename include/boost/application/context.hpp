@@ -41,17 +41,19 @@
 /// }
 /// \endcode
 
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
+
 // application
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/aspect_map.hpp>
-#include <boost/thread/shared_lock_guard.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    namespace detail {
 
@@ -59,12 +61,12 @@ namespace boost { namespace application {
 
       template <class T> struct T_instance
       {
-         static csbl::shared_ptr<T> ptr;
-         static boost::shared_mutex lock;
+         static std::shared_ptr<T> ptr;
+         static std::shared_mutex lock;
       };
 
-      template <class T> csbl::shared_ptr<T> T_instance<T>::ptr;
-      template <class T> boost::shared_mutex T_instance<T>::lock;
+      template <class T> std::shared_ptr<T> T_instance<T>::ptr;
+      template <class T> std::shared_mutex T_instance<T>::lock;
 
    } // application::detail
 
@@ -84,10 +86,13 @@ namespace boost { namespace application {
     * you can use one of the ready-to-use aspects provided by library,
     * or define your own aspects.
     */
-   class basic_context
-      : public aspect_map, noncopyable
+   class basic_context : public aspect_map
    {
    public:
+      basic_context() = default;
+      basic_context(const basic_context&) = delete;
+      basic_context& operator=(const basic_context&) = delete;
+
       // nothing here! Reserved for future use.
    };
 
@@ -95,7 +100,7 @@ namespace boost { namespace application {
    {
    public:
 
-      static inline csbl::shared_ptr<global_context> create() {
+      static inline std::shared_ptr<global_context> create() {
         boost::system::error_code ec;
         create(ec);
 
@@ -105,8 +110,8 @@ namespace boost { namespace application {
          return instance_t::ptr;
       }
 
-      static inline csbl::shared_ptr<global_context> create(boost::system::error_code &ec) BOOST_NOEXCEPT  {
-         boost::lock_guard<boost::shared_mutex> u_guard(instance_t::lock);
+      static inline std::shared_ptr<global_context> create(boost::system::error_code &ec) BOOST_NOEXCEPT  {
+         std::lock_guard<std::shared_mutex> u_guard(instance_t::lock);
 
          ec.clear();
          if(already_created()) {
@@ -115,7 +120,7 @@ namespace boost { namespace application {
                  boost::system::generic_category()
                  );
 
-            return csbl::shared_ptr<global_context>();
+            return std::shared_ptr<global_context>();
          }
 
          instance_t::ptr.reset(new context_t());
@@ -129,9 +134,9 @@ namespace boost { namespace application {
          if(ec) 
             BOOST_APPLICATION_THROW_LAST_SYSTEM_ERROR_USING_MY_EC("no global context to destroy", ec);  
       }
-	  
+
       static inline void destroy(boost::system::error_code &ec) BOOST_NOEXCEPT {
-         boost::lock_guard<boost::shared_mutex> u_guard(instance_t::lock);
+         std::lock_guard<std::shared_mutex> u_guard(instance_t::lock);
 
          ec.clear();
          if(!already_created()) {
@@ -145,9 +150,9 @@ namespace boost { namespace application {
          instance_t::ptr.reset();
       }
 
-      static inline csbl::shared_ptr<global_context> get() {
+      static inline std::shared_ptr<global_context> get() {
          boost::system::error_code ec;
-         csbl::shared_ptr<global_context> cxt =get(ec);
+         std::shared_ptr<global_context> cxt =get(ec);
 
          if(ec)
             BOOST_APPLICATION_THROW_LAST_SYSTEM_ERROR_USING_MY_EC("there is no global context", ec); 
@@ -155,8 +160,8 @@ namespace boost { namespace application {
          return cxt;
       }
 
-      static inline csbl::shared_ptr<global_context> get(boost::system::error_code &ec) BOOST_NOEXCEPT {
-         boost::shared_lock_guard<boost::shared_mutex> s_guard(instance_t::lock);
+      static inline std::shared_ptr<global_context> get(boost::system::error_code &ec) BOOST_NOEXCEPT {
+         std::shared_lock<std::shared_mutex> s_guard(instance_t::lock);
 
          ec.clear();
          if(!already_created()) {
@@ -164,19 +169,19 @@ namespace boost { namespace application {
                  boost::system::errc::bad_file_descriptor,
                  boost::system::generic_category()
                  );
-           return csbl::shared_ptr<global_context>();
+           return std::shared_ptr<global_context>();
          }
 
          return instance_t::ptr;
       }
-	  
+
    protected:
       global_context() { }
-	  
+
    private:
       typedef global_context context_t;
       typedef detail::T_instance<context_t> instance_t;
-      typedef csbl::shared_ptr<context_t> context_ptr_t;
+      typedef std::shared_ptr<context_t> context_ptr_t;
 	  
       static inline bool already_created() {
           return (instance_t::ptr != 0);
@@ -184,9 +189,9 @@ namespace boost { namespace application {
    };
 
    typedef basic_context context;
-   typedef csbl::shared_ptr<global_context> global_context_ptr;
-   typedef csbl::shared_ptr<basic_context> context_ptr;
+   typedef std::shared_ptr<global_context> global_context_ptr;
+   typedef std::shared_ptr<basic_context> context_ptr;
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_CONTEXT_HPP

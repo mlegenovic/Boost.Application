@@ -15,12 +15,9 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 #include <boost/uuid/string_generator.hpp>
-#include <boost/bind.hpp>
 
 using namespace boost::application;
 
@@ -40,17 +37,15 @@ public:
    int operator()()
    {
       std::cout << "Test" << std::endl;
-      boost::shared_ptr<args> myargs 
-         = this_application()->find<args>();
+      auto myargs = this_application()->find<args>();
 
       if (myargs)
       {
-         const std::vector<std::string>& arg_vector = myargs->arg_vector();
+         const auto& arg_vector = myargs->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 
@@ -83,15 +78,15 @@ public:
 
 // main
 
-int main(int argc, char *argv[])
-{   
-   myapp app;   
+int main(int /*argc*/, char */*argv*/[])
+{
+   myapp app;
    
    boost::uuids::string_generator gen;
    boost::uuids::uuid appuuid = gen("{9F63E4AD-ECA5-475D-8784-4BAA329EF9F3}");
- 
+
    global_context_ptr ctx = global_context::create();
-   
+
    // way 1
    /*
    handler<>::callback cb 
@@ -100,16 +95,16 @@ int main(int argc, char *argv[])
    // use aspects
 
    this_application()->insert<args>(
-      boost::make_shared<args>(argc, argv));
+      std::make_shared<args>(argc, argv));
 
    this_application()->insert<limit_single_instance>(
-      boost::make_shared<limit_single_instance_default_behaviour>(appuuid, cb));
+      std::make_shared<limit_single_instance_default_behaviour>(appuuid, cb));
    */
 
    // way 2
    this_application()->insert<limit_single_instance>(
-      boost::make_shared<limit_single_instance_default_behaviour>(appuuid, 
-         handler<bool>::make_callback(app, &myapp::instace_aready_running)));
+      std::make_shared<limit_single_instance_default_behaviour>(appuuid,
+         [&app] { return app.instace_aready_running(); }));
 
    int ret = launch<common>(app, ctx);
 
@@ -117,4 +112,3 @@ int main(int argc, char *argv[])
 
    return ret;
 }
-

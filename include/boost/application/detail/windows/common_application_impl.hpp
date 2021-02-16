@@ -22,8 +22,7 @@
 #include <boost/application/aspects/termination_handler.hpp>
 #include <boost/application/signal_binder.hpp>
 
-#include <boost/thread/thread.hpp>
-#include <boost/lambda/lambda.hpp>
+#include <functional>
 
 namespace boost { namespace application {
 
@@ -32,18 +31,18 @@ namespace boost { namespace application {
    {
    public:
 
-      typedef csbl::function< int (void) > mainop;
+      typedef std::function< int (void) > mainop;
 
       // string types to be used internaly to handle unicode on windows
       typedef CharType char_type;
       typedef std::basic_string<char_type> string_type;
 
-      common_application_impl_(const mainop &main_op,
+      common_application_impl_(mainop main_op,
                                signal_binder &sb,
                                application::context &context,
                                boost::system::error_code& ec)
          : application_impl(context)
-         , main_(main_op)
+         , main_(std::move(main_op))
       {
          sb.start();
       }

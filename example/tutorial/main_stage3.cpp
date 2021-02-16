@@ -14,8 +14,8 @@
 
 //[tutorialcpps3
 
-int main(int argc, char *argv[])
-{   
+int main(int /*argc*/, char */*argv*/[])
+{
    application::context app_context;
 
    /*<< Tie stop to termination_handler using default behaviour >>*/
@@ -26,4 +26,3 @@ int main(int argc, char *argv[])
 }
 
 //]
-

@@ -33,13 +33,12 @@
 // aspects used by launch
 #include <boost/application/aspects/limit_single_instance.hpp>
 #include <boost/application/detail/ensure_single_instance.hpp>
-#include <boost/application/detail/csbl.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    // receive a boost::system::error_code variable 'ec' launch versions
 
@@ -72,9 +71,9 @@ namespace boost { namespace application {
    inline int launch(Application& app, CustomType& ct, Context &cxt,
       system::error_code& ec) {
       // the ensure_single_instance tell us to exit?
-     
+
       bool we_need_exit = detail::ensure_single_instance<Context>()(cxt, ec); 
-     
+
       if(ec) return 0;
       if(we_need_exit) return 0;
 
@@ -200,6 +199,6 @@ namespace boost { namespace application {
       return launch<ApplicationMode>(app, *cxt.get());
    }
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_LAUNCH_HPP

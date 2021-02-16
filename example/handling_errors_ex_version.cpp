@@ -14,7 +14,6 @@
 
 // -----------------------------------------------------------------------------
 
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -25,7 +24,7 @@ class myapp
 public:
 
    // param
-   int operator()(application::context& context)
+   int operator()()
    {
       return 0;
    }
@@ -35,8 +34,8 @@ public:
 
 //[exver
 // ...
-int main(int argc, char *argv[])
-{   
+int main(int /*argc*/, char */*argv*/[])
+{
    try
    {
       myapp app;
@@ -53,4 +52,3 @@ int main(int argc, char *argv[])
    }
 }
 //]
-

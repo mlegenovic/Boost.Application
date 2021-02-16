@@ -1,20 +1,17 @@
-// -----------------------------------------------------------------------------
-// selfpipe.cpp: examples that show how use od self-pipe on POISX
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2013 Renato Tegon Forti
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying 
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-// -----------------------------------------------------------------------------
-
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
+#include <mutex>
+#include <thread>
+#include <chrono>
+
 #include <boost/application.hpp>
 #include <boost/application/aspects/selfpipe.hpp>
+#include <boost/application/signal_binder.hpp>
 #include <boost/logic/tribool.hpp>
 
 using namespace boost;
@@ -31,7 +28,7 @@ inline application::global_context_ptr this_application() {
 
 class selfpipe_state
 {
-   boost::mutex mutex_;
+   std::mutex mutex_;
    boost::logic::tribool state_; 
 
 public:
@@ -41,19 +38,19 @@ public:
 
    void signal()
    {
-      boost::lock_guard<boost::mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       state_ = true;
    }
 
    void error()
    {
-      boost::lock_guard<boost::mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       state_ = boost::logic::indeterminate;
    }
 
    boost::logic::tribool state()
    {
-      boost::lock_guard<boost::mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       return state_;
    }
 
@@ -65,15 +62,14 @@ public:
 
    int operator()()
    {
-      boost::shared_ptr<application::selfpipe> selfpipe 
-         = this_application()->find<application::selfpipe>();
+      auto selfpipe = this_application()->find<application::selfpipe>();
 
       fd_set readfds;
       FD_ZERO(&readfds);
       FD_SET(selfpipe->read_fd(), &readfds);
 
       /*<<Launch a work thread>>*/
-      boost::thread thread(&myapp::worker, this);
+      std::thread thread(&myapp::worker, this);
 
       int retval = 0;
 
@@ -107,7 +103,7 @@ protected:
    {
       while(selfpipe_state_.state() == false)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(1));
+         std::this_thread::sleep_for(std::chrono::seconds(1));
          std::cout << "working..." << std::endl;
       }
 
@@ -116,7 +112,7 @@ protected:
          std::cout << "other end work when we have an error..." << std::endl;
       }
 
-      boost::this_thread::sleep(boost::posix_time::seconds(1));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
       std::cout << "other end work..." << std::endl;
    }
 
@@ -133,13 +129,13 @@ public:
 
    /*<< Customize SIGNALS bind >>*/
    signal_usr2(application::global_context_ptr cxt)
-      : application::signal_manager(cxt)
+      : application::signal_manager(*cxt)
    {
-      application::handler<>::parameter_callback callback1
-         = boost::bind(&signal_usr2::signal_usr1_handler, this);
+      application::handler<>::callback callback1 =
+         [this] { return signal_usr1_handler(); };
 
-      application::handler<>::parameter_callback callback2
-         = boost::bind(&signal_usr2::signal_usr2_handler, this);
+      application::handler<>::callback callback2 =
+         [this] { return signal_usr2_handler(); };
 
       /*<< Define signal bind >>*/ 
       bind(SIGUSR1, callback1); 
@@ -158,8 +154,7 @@ public:
    {
       std::cout << "signal_usr2_handler" << std::endl;
 
-      boost::shared_ptr<application::selfpipe> selfpipe 
-         = this_application()->find<application::selfpipe>();
+      auto selfpipe = this_application()->find<application::selfpipe>();
 
       /*<<Notify application in case of reception of SIGUSR2 signal, unsing self-pipe>>*/
       selfpipe->poke();
@@ -170,20 +165,19 @@ public:
 
 // main
 
-int main(int argc, char *argv[])
-{   
+int main(int /*argc*/, char */*argv*/[])
+{
    myapp app;
- 
+
    application::global_context_ptr ctx = application::global_context::create();
-   
+
    /*<<Add selfpipe to application context>>*/
    this_application()->insert<application::posix::selfpipe>(
-      boost::make_shared<application::posix::selfpipe>());
-	  
+      std::make_shared<application::posix::selfpipe>());
+
    signal_usr2 sm(ctx);
    int ret = application::launch<application::common>(app, sm, ctx);
 
    return ret;
 }
 //]
-

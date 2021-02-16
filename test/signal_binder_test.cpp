@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
@@ -35,8 +35,8 @@ struct handler_test
 class my_signal_binder : public application::signal_binder
 {
 public:
-	my_signal_binder(application::context &app_context)
-	   : application::signal_binder(app_context){}
+   explicit my_signal_binder(application::context &app_context)
+	   : application::signal_binder(app_context) { }
 
    void start()
    {
@@ -44,7 +44,7 @@ public:
    }
 };
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(signal_binder_test)
 {
    application::context app_context;
    my_signal_binder app_signal_binder(app_context);
@@ -52,8 +52,8 @@ int test_main(int argc, char** argv)
 
    app_signal_binder.start();
 
-   application::handler<>::callback cb = boost::bind(
-               &handler_test::signal_handler1, &app_handler_test);
+   application::handler<>::callback cb =
+      [&app_handler_test] { return app_handler_test.signal_handler1(); };
 
    boost::system::error_code ec;
    app_signal_binder.bind(SIGABRT, cb, ec);
@@ -79,10 +79,4 @@ int test_main(int argc, char** argv)
       std::cerr << "waiting..." << std::endl;
 
    BOOST_CHECK(app_handler_test.count_ > 0);
-
-   return 0;
 }
-
-
-
-

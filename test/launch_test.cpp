@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
@@ -25,18 +25,14 @@ public:
 class myapp2
 {
 public:
-   myapp2(application::context& context)
-      : context_(context)
+   myapp2(application::context&)
    {
    }
-   
+
    int operator()()
    {
       return 0;
    }
-     
-private:
-   application::context& context_;
 };
 
 class my_signal_manager : public application::signal_manager
@@ -46,16 +42,14 @@ public:
    my_signal_manager(application::context &context)
       : signal_manager(context)
    {
-      application::handler<>::callback cb
-         = boost::bind(&my_signal_manager::stop, this);
+      application::handler<>::callback cb = [this] { return stop(); };
 
       bind(SIGINT,  cb);
    }
 
    bool stop()
    {
-      application::csbl::shared_ptr<application::wait_for_termination_request> th
-         = context_.find<application::wait_for_termination_request>();
+      auto th = context_.find<application::wait_for_termination_request>();
 
       th->proceed();
 
@@ -63,7 +57,7 @@ public:
    }
 };
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(launch_test)
 {
    // common
 
@@ -351,11 +345,4 @@ int test_main(int argc, char** argv)
    }
 
 #endif
-
-   return 0;
 }
-
-
-
-
-

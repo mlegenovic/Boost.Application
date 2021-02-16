@@ -1,18 +1,7 @@
-// auto_handler.hpp  ---------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
-
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 05-06-2014 dd-mm-yyyy - Initial Release
-//
-//
-// -----------------------------------------------------------------------------
 
 //
 // *****************************************************************************
@@ -24,12 +13,12 @@
 #ifndef BOOST_APPLICATION_AUTO_HANDLER_HPP
 #define BOOST_APPLICATION_AUTO_HANDLER_HPP
 
+#include <memory>
+
 // application
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/context.hpp>
 
-#include <boost/noncopyable.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/static_assert.hpp> 
@@ -55,7 +44,7 @@ struct name                                                                \
    sizeof(chk<T>(0)) == sizeof(yes);                                       \
 }
 
-namespace boost { namespace application { 
+namespace boost::application {
 
    /*!
     * This file has a util class (auto_handler) that can be used to 
@@ -97,12 +86,12 @@ namespace boost { namespace application {
       // context constructible 
       template <typename Application, typename Derived>
       struct handler_auto_set_c : public Application {
-         handler_auto_set_c(context &cxt)
+         explicit handler_auto_set_c(context &cxt)
             : Application (cxt) {
             static_cast<Derived*>(this)->setup(cxt);
          }
 
-         handler_auto_set_c(context &cxt, boost::uuids::uuid& appid)
+         handler_auto_set_c(context &cxt, const boost::uuids::uuid& appid)
             : Application (cxt) {
             static_cast<Derived*>(this)->setup(cxt);
             static_cast<Derived*>(this)->setup(cxt, appid);
@@ -112,11 +101,11 @@ namespace boost { namespace application {
       // unconstructible (to use with global_context)
       template <typename Application, typename Derived>
       struct handler_auto_set_u : public Application {
-         handler_auto_set_u(context &cxt) {
+         explicit handler_auto_set_u(context &cxt) {
             static_cast<Derived*>(this)->setup(cxt);
          }
 
-         handler_auto_set_u(context &cxt, boost::uuids::uuid& appid) {
+         handler_auto_set_u(context &cxt, const boost::uuids::uuid& appid) {
             static_cast<Derived*>(this)->setup(cxt);
             static_cast<Derived*>(this)->setup(cxt, appid);
          }
@@ -170,7 +159,6 @@ namespace boost { namespace application {
             detail::handler_auto_set_u<Application, auto_handler<Application> > 
       >::type
    {
-      
       template <typename , typename >
          friend struct detail::handler_auto_set_u;
 
@@ -185,16 +173,16 @@ namespace boost { namespace application {
             detail::handler_auto_set_u<Application, auto_handler<Application> > 
          >::type base_selector;
 
-      auto_handler(context &cxt)
+      explicit auto_handler(context &cxt)
          : base_selector(cxt) { }
 
-      auto_handler(context &cxt, uuids::uuid& appid)
+      auto_handler(context &cxt, const uuids::uuid& appid)
          : base_selector (cxt, appid) { }
 
-      auto_handler(global_context_ptr cxt)
+      explicit auto_handler(global_context_ptr cxt)
          : base_selector(*cxt.get()) { }
 
-      auto_handler(global_context_ptr cxt, uuids::uuid& appid)
+      auto_handler(global_context_ptr cxt, const uuids::uuid& appid)
          : base_selector(*cxt.get(), appid) { }
 
    protected:
@@ -204,11 +192,9 @@ namespace boost { namespace application {
       void setup(context &cxt) {
          if(has_stop<Application, bool(Application::*)()>::value) {   
             cxt.insert<termination_handler>(
-               csbl::make_shared<termination_handler_default_behaviour>(
-                  handler<bool>::make_callback(*this, 
-                     &auto_handler::stop_handler_<
-                        has_stop<Application, bool(Application::*)()>::value
-                           > )));
+               std::make_shared<termination_handler_default_behaviour>(
+                  [this] { return stop_handler_<has_stop<
+                     Application, bool(Application::*)()>::value>(); }));
          }
   
          // platform dependent
@@ -216,7 +202,7 @@ namespace boost { namespace application {
 #        if defined( BOOST_WINDOWS_API )   
          if(has_pause<Application, bool(Application::*)()>::value) {
             cxt.insert<pause_handler>(
-               csbl::make_shared<pause_handler_default_behaviour>(
+               std::make_shared<pause_handler_default_behaviour>(
                   handler<bool>::make_callback(*this, 
                      &auto_handler::pause_handler_<
                         has_pause<Application, bool(Application::*)()>::value
@@ -225,7 +211,7 @@ namespace boost { namespace application {
 
          if(has_resume<Application, bool(Application::*)()>::value) {
             cxt.insert<resume_handler>(
-               csbl::make_shared<resume_handler_default_behaviour>(
+               std::make_shared<resume_handler_default_behaviour>(
                   handler<bool>::make_callback(*this, 
                      &auto_handler::resume_handler_<
                         has_resume<Application, bool(Application::*)()>::value
@@ -235,14 +221,13 @@ namespace boost { namespace application {
 
       }
 
-      void setup(context &cxt, boost::uuids::uuid& appid) {
+      void setup(context &cxt, const boost::uuids::uuid& appid) {
          if(has_single_instance<Application, bool(Application::*)()>::value) {
             cxt.insert<limit_single_instance>(
-               csbl::make_shared<limit_single_instance_default_behaviour>(appid,
-                  handler<bool>::make_callback(*this, 
-                     &auto_handler::single_instance_handler_<
-                        has_single_instance<Application, bool(Application::*)()>::value
-                           > )));
+               std::make_shared<limit_single_instance_default_behaviour>(
+                  appid, [this] {
+                     return single_instance_handler_<has_single_instance<
+                        Application, bool(Application::*)()>::value>(); }));
          }
       }
 
@@ -307,7 +292,7 @@ namespace boost { namespace application {
       }
    };  
 
-}} // boost::application
+} // boost::application
 
 /*
 
@@ -367,7 +352,7 @@ int main()
       = boost::bind(&myapp::instace_aready_running, &app, _1);
 
    app_context.insert<application::limit_single_instance>(
-      csbl::make_shared<application::limit_single_instance_default_behaviour>(appuuid, callback));
+      std::make_shared<application::limit_single_instance_default_behaviour>(appuuid, callback));
 
    // add termination handler
   
@@ -375,7 +360,7 @@ int main()
       = boost::bind(&myapp::stop, &app, _1);
 
    app_context.insert<application::termination_handler>(
-      csbl::make_shared<application::termination_handler_default_behaviour>(termination_callback));
+      std::make_shared<application::termination_handler_default_behaviour>(termination_callback));
 
    return boost::application::launch<boost::application::common>(app, app_context);
 }
@@ -443,13 +428,13 @@ int main()
       = boost::bind(&myapp::instace_aready_running, &app);
 
    this_application()->insert<limit_single_instance>(
-      csbl::make_shared<limit_single_instance_default_behaviour>(appuuid, limit_single_instance_callback));
+      std::make_shared<limit_single_instance_default_behaviour>(appuuid, limit_single_instance_callback));
 
    handler<>::global_context_callback termination_callback 
       = boost::bind(&myapp::stop, &app);
 
    this_application()->insert<termination_handler>(
-      csbl::make_shared<termination_handler_default_behaviour>(termination_callback));
+      std::make_shared<termination_handler_default_behaviour>(termination_callback));
 
    int ret = application::launch<application::common>(app, ctx);
 

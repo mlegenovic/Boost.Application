@@ -7,8 +7,6 @@
 #ifndef BOOST_APPLICATION_DETAIL_PROCESS_ID_HPP
 #define BOOST_APPLICATION_DETAIL_PROCESS_ID_HPP
 
-#include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/system_error.hpp>
 
 #include <cstdlib>
@@ -17,34 +15,33 @@
 # pragma once
 #endif
 
-namespace boost { namespace application { namespace detail {
+namespace boost::application::detail {
 
    class  process_id_impl {
-      
+
    public:
       typedef pid_t native_pid_t;
       
       process_id_impl()
-         : pid_ (0)  
+         : pid_(0)
       {}
-      
-      process_id_impl(native_pid_t pid)
-         : pid_ (pid)  
+
+      explicit process_id_impl(native_pid_t pid)
+         : pid_(pid)
       {}
-      
-      native_pid_t pid() BOOST_NOEXCEPT {
+
+      native_pid_t pid() noexcept {
          if(pid_)
             return pid_;
-            
+
          pid_ = getpid();
          return pid_;
       }
-        
+
    private:
       native_pid_t pid_;
    };
-    
-}}} // namespace boost::application::detail
 
-#endif // BOOST_APPLICATION_DETAIL_WINDOWS_PATH_FROM_ME_HPP
+} // namespace boost::application::detail
 
+#endif // BOOST_APPLICATION_DETAIL_PROCESS_ID_HPP

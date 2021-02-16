@@ -29,7 +29,7 @@
     BOOST_STRINGIZE(BOOST_APPLICATION_VERSION_BUILD)
 #endif // BOOST_APPLICATION_VERSION
 
-namespace boost { namespace application {
+namespace boost::application {
 
    inline const char* library_version_string() {
       return BOOST_APPLICATION_VERSION;
@@ -47,6 +47,6 @@ namespace boost { namespace application {
       return BOOST_APPLICATION_VERSION_BUILD;
    }
 
-}}// boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_APPLICATION_VERSION_HPP

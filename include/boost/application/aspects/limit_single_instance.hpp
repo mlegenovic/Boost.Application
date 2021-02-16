@@ -1,25 +1,14 @@
-// limit_single_instance.hpp ------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 06-01-2012 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_LIMIT_SINGLE_INSTANCE_ASPECT_HPP
 #define BOOST_APPLICATION_LIMIT_SINGLE_INSTANCE_ASPECT_HPP
 
-#include <boost/noncopyable.hpp>
+#include <memory>
 
 #include <boost/application/config.hpp>
-#include <boost/application/detail/csbl.hpp>
 #if defined( ENABLE_BOOST_INTERPROCESS_NAMED_MUTEX )
 #include <boost/interprocess/sync/named_mutex.hpp>
 #endif
@@ -32,7 +21,7 @@
 #endif
 #include <boost/application/handler.hpp>
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief A contract class to be used by the user on your own
@@ -43,12 +32,12 @@ namespace boost { namespace application {
    {
    public:
 
-      limit_single_instance() {}
+      limit_single_instance() = default;
 
-      limit_single_instance(const callback& cb)
+      explicit limit_single_instance(const callback& cb)
          : handler<>(cb) {}
 
-      virtual ~limit_single_instance() {}
+      ~limit_single_instance() override = default;
 
       /*!
        * User need implement this to return true
@@ -60,7 +49,7 @@ namespace boost { namespace application {
       virtual bool lock() = 0;
 
       virtual bool is_another_instance_running() = 0;
-      virtual void release(bool force = false) = 0;
+      virtual void release(bool force) = 0;
    };
 
    /*!
@@ -144,7 +133,7 @@ namespace boost { namespace application {
        *         running on current operating system.
        *
        */
-      bool lock(boost::system::error_code &ec)
+      bool lock(boost::system::error_code &/*ec*/)
       {
          std::string instance_id =
             to_upper_copy(boost::lexical_cast<std::string>(uuid_));
@@ -218,10 +207,10 @@ namespace boost { namespace application {
       }
 
    private:
-      bool owns_lock_;
       uuids::uuid uuid_;
+      bool owns_lock_;
 
-      csbl::shared_ptr<interprocess::named_mutex> named_mutex_;
+      std::shared_ptr<interprocess::named_mutex> named_mutex_;
    };
 #else
    class limit_single_instance_default_behaviour : public limit_single_instance
@@ -236,8 +225,8 @@ namespace boost { namespace application {
        *        In case of positive evaluation of single istance application,
        *        will exit.
        */
-      limit_single_instance_default_behaviour(const uuids::uuid& app_uuid)
-         : impl_(new limit_single_instance_impl())
+      explicit limit_single_instance_default_behaviour(const uuids::uuid& app_uuid)
+         : impl_(new detail::limit_single_instance_impl())
          , uuid_(app_uuid)
       {}
 
@@ -255,7 +244,7 @@ namespace boost { namespace application {
       limit_single_instance_default_behaviour(const uuids::uuid& app_uuid,
          const callback& cb)
          : limit_single_instance(cb)
-         , impl_(new limit_single_instance_impl())
+         , impl_(new detail::limit_single_instance_impl())
          , uuid_(app_uuid)
       {}
 
@@ -272,7 +261,7 @@ namespace boost { namespace application {
        *         running on current operating system.
        *
        */
-      bool lock(boost::system::error_code &ec) {
+      bool lock(boost::system::error_code &ec) override {
          return impl_->lock(uuid_, ec);
       }
 
@@ -285,7 +274,7 @@ namespace boost { namespace application {
        *         running on current operating system.
        *
        */
-      bool lock() {
+      bool lock() override {
          boost::system::error_code ec;
 
          bool result = lock(ec);
@@ -304,7 +293,7 @@ namespace boost { namespace application {
        *         already running on current system.
        *
        */
-      bool is_another_instance_running() {
+      bool is_another_instance_running() override {
          return impl_->is_another_instance_running();
       }
 
@@ -312,19 +301,18 @@ namespace boost { namespace application {
        * Release system mutex.
        *
        */
-      void release(bool force = false) {
+      void release(bool force = false) override {
          impl_->release(force);
       }
 
    private:
 
-      csbl::shared_ptr<limit_single_instance_impl> impl_;
+      std::shared_ptr<detail::limit_single_instance_impl> impl_;
       uuids::uuid uuid_;
 
    };
 #endif
 
-}}  // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_LIMIT_SINGLE_INSTANCE_ASPECT_HPP
-

@@ -15,8 +15,6 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 // Single instance mechanism that will support aspect based on
 // Boost.Interprocess Named Mutex too.
 #define ENABLE_BOOST_INTERPROCESS_NAMED_MUTEX
@@ -43,17 +41,15 @@ public:
    // param
    int operator()()
    {
-      boost::shared_ptr<application::args> args =
-         context_.find<application::args>();
+      auto args = context_.find<application::args>();
 
       if(args)
       {
-         std::vector<std::string> &arg_vector = args->arg_vector();
+         const auto &arg_vector = args->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 
@@ -69,15 +65,15 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
-{  
+int main(int /*argc*/, char */*argv*/[])
+{
    application::context app_context;
    myapp app(app_context);
-   
+
    boost::uuids::string_generator gen;
 
    app_context.insert<application::limit_single_instance>(
-      boost::make_shared<application::limit_single_instance_default_behaviour>(
+      std::make_shared<application::limit_single_instance_default_behaviour>(
          gen("{0F1164AD-ECA5-175D-8784-4BAA329EF9F2}")));
 
    return application::launch<application::common>(app, app_context);

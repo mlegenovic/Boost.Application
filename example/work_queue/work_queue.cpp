@@ -10,29 +10,31 @@
 // The result will be printed on CTRL-C (Stop) signal
 // -----------------------------------------------------------------------------
 
-#include <boost/asio.hpp>
-#include <boost/thread.hpp>
 #include <boost/application.hpp>
 #include <boost/timer/timer.hpp>
-#include <boost/bind.hpp>
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <mutex>
 
 #include "work_queue.hpp"
 
-using namespace std;
 using namespace boost;
+
+using matrix_type = std::vector<std::vector<double>>;
 
 // worker class that calculate gaussian blur
 // http://en.wikipedia.org/wiki/Gaussian_blur
 template< int kernelRadius = 3> 
 struct gaussian_blur
 {
-   typedef boost::function< void (vector< vector<double> >) > callback;
+   using callback = std::function<void(const matrix_type&)>;
 
-   gaussian_blur(const callback& cb)
-      : callback_(cb)
+   explicit gaussian_blur(callback cb)
+      : callback_(std::move(cb))
    {
    }
 
@@ -41,14 +43,14 @@ struct gaussian_blur
       boost::timer::cpu_timer timer;
 
       kernel2d_ = produce_gaussian_kernel(kernelRadius);
-      
+
       boost::timer::cpu_times const elapsed_times(timer.elapsed());
 
       std::cout 
-         << "gaussian_blur takes:" 
-         <<  format(elapsed_times, 9) 
-         << ", for size: " 
-         << kernelRadius 
+         << "gaussian_blur takes:"
+         <<  format(elapsed_times, 9)
+         << ", for size: "
+         << kernelRadius
          << std::endl;
 
       callback_(kernel2d_);
@@ -56,24 +58,24 @@ struct gaussian_blur
 
 protected:
 
-   double gaussian (double x, double mu, double sigma)
+   double gaussian(double x, double mu, double sigma)
    {
-      return exp( -(((x-mu)/(sigma))*((x-mu)/(sigma)))/2.0 );
+      return exp(-(((x-mu)/(sigma))*((x-mu)/(sigma)))/2.0);
    }
 
-   vector< vector<double> > produce_gaussian_kernel (int internalKernelRadius) 
+   matrix_type produce_gaussian_kernel(int internalKernelRadius)
    {
       // get kernel matrix
-      vector< vector<double> > kernel2d ( 2*internalKernelRadius+1, vector<double>(2*internalKernelRadius+1) );
+      matrix_type kernel2d(2*internalKernelRadius+1, std::vector<double>(2*internalKernelRadius+1));
 
       // determine sigma
       double sigma = internalKernelRadius/2.;
 
       // fill values
       double sum = 0;
-      for (int row = 0; row < kernel2d.size(); row++)
+      for (std::size_t row = 0; row < kernel2d.size(); row++)
       {
-         for (int col = 0; col < kernel2d[row].size(); col++) 
+         for (std::size_t col = 0; col < kernel2d[row].size(); col++)
          {
             kernel2d[row][col] = gaussian(row, internalKernelRadius, sigma) * gaussian(col, internalKernelRadius, sigma);
             sum += kernel2d[row][col];
@@ -81,9 +83,9 @@ protected:
       }
 
       // normalize kernel, or the image becomes dark 
-      for (int row = 0; row < kernel2d.size(); row++)
-         for (int col = 0; col < kernel2d[row].size(); col++)
-            kernel2d[row][col] /= sum;
+      for (auto & row : kernel2d)
+         for (double & col : row)
+            col /= sum;
 
       return kernel2d;
    }
@@ -91,22 +93,22 @@ protected:
 private:
 
    callback callback_;
-   vector< vector<double> > kernel2d_;
+   matrix_type kernel2d_;
 };
 
 // application class
-class myapp : work_queue<0> 
+class myapp : work_queue<0>
 {
-public: 
+public:
 
-   myapp(application::context& context)
-      : context_(context)
+   explicit myapp(application::context& context)
+      : task_count_(0), context_(context)
    {
    }
-   
-   void add_result(vector< vector<double> > kernel2d)
+
+   void add_result(const matrix_type& kernel2d)
    {
-      boost::lock_guard<boost::mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
 
       task_count_++;
 
@@ -114,7 +116,7 @@ public:
 
       if(task_count_== 3)
       {
-         cout << "all tasks are completed, waiting ctrl-c to display the results..." << endl;
+         std::cout << "all tasks are completed, waiting ctrl-c to display the results..." << std::endl;
       }
    }
 
@@ -124,42 +126,40 @@ public:
       task_count_ = 0;
 
       //our tasks
-      add_task(gaussian_blur<3>( boost::bind( &myapp::add_result, this, _1 ))); 
-      add_task(gaussian_blur<6>( boost::bind( &myapp::add_result, this, _1 ))); 
-      add_task(gaussian_blur<9>( boost::bind( &myapp::add_result, this, _1 ))); 
-     
+      add_task(gaussian_blur<3>([this](const matrix_type& kernel2d) { add_result(kernel2d); }));
+      add_task(gaussian_blur<6>([this](const matrix_type& kernel2d) { add_result(kernel2d); }));
+      add_task(gaussian_blur<9>([this](const matrix_type& kernel2d) { add_result(kernel2d); }));
+
       context_.find<application::wait_for_termination_request>()->wait();
 
       return 0;
    }
-   
+
    bool stop()
    {
       std::cout << "Result..." << std::endl;
 
-      for(int i = 0; i < result_.size(); ++i)
+      for(std::size_t i = 0; i < result_.size(); ++i)
       {
-         cout << i << " : -----------------------" << std::endl;
+         std::cout << i << " : -----------------------" << std::endl;
 
-         vector< vector<double> > & kernel2d = result_[i];
+         auto& kernel2d = result_[i];
 
-         for (int row = 0; row < kernel2d.size(); row++) 
-         {
-            for (int col = 0; col < kernel2d[row].size(); col++)
-            {
-               cout << setprecision(5) << fixed << kernel2d[row][col] << " ";
+         for (auto & row : kernel2d) {
+            for (double col : row) {
+               std::cout << std::setprecision(5) << std::fixed << col << " ";
             }
-            cout << endl;
+            std::cout << std::endl;
          }
       }
 
-      return 1;
+      return true;
    }
 
 private:
 
-   boost::mutex mutex_;  
-   vector< vector< vector<double> > > result_;
+   std::mutex mutex_;
+   std::vector<std::vector<std::vector<double>>> result_;
 
    int task_count_;
 
@@ -167,19 +167,15 @@ private:
    
 }; // myapp 
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {
-   BOOST_APPLICATION_FEATURE_SELECT
-
    application::context app_context;
    myapp app(app_context);
-   
-   application::handler<>::callback cb 
-      = boost::bind(&myapp::stop, &app);
+
+   application::handler<>::callback cb = [&app] { return app.stop(); };
 
    app_context.insert<application::termination_handler>(
-      make_shared<application::termination_handler_default_behaviour>(cb));
-      
+      std::make_shared<application::termination_handler_default_behaviour>(cb));
+
    return application::launch<application::common>(app, app_context);
 }
-

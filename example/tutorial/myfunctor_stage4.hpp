@@ -10,9 +10,8 @@
 // can be compiled.
 //
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
+#include <fstream>
 #include <boost/application.hpp>
 
 using namespace boost;

@@ -1,5 +1,7 @@
 #include "myapp.h"
 
+#include <memory>
+
 myapp::myapp(void)
 {
 }
@@ -10,8 +12,7 @@ myapp::~myapp(void)
 
 int myapp::operator()(void)
 {
-   shared_ptr<application::args> myargs 
-      = this_application()->find<application::args>();
+   auto myargs = this_application()->find<application::args>();
 
    if (myargs)
    {

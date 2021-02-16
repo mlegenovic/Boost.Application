@@ -51,10 +51,10 @@
 // Stoping my application...
 //
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <fstream>
+#include <thread>
+#include <chrono>
 #include <boost/program_options.hpp>
 #include <boost/application.hpp>
 #include <boost/application/auto_handler.hpp>
@@ -92,15 +92,13 @@ public:
       my_log_file_ << "-----------------------------" << std::endl;
 
       // only print args on screen
-      for(std::vector<std::string>::iterator it = arg_vector.begin();
-         it != arg_vector.end(); ++it) {
-         my_log_file_ << *it << std::endl;
+      for(const auto& arg : arg_vector) {
+         my_log_file_ << arg << std::endl;
       }
 
       my_log_file_ << "-----------------------------" << std::endl;
 
-      boost::shared_ptr<application::process_id> pid 
-         = context_.find<application::process_id>();
+      auto pid = context_.find<application::process_id>();
 
       my_log_file_ << "PID: " << pid->pid() << std::endl;
 
@@ -108,13 +106,12 @@ public:
 
       // run logic
 
-      boost::shared_ptr<application::status> st =
-         context_.find<application::status>();
+      auto st = context_.find<application::status>();
 
       int count = 0;
       while(st->state() != application::status::stopped)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(1));
+         std::this_thread::sleep_for(std::chrono::seconds(1));
 
          if(st->state() == application::status::paused)
             my_log_file_ << count++ << ", paused..." << std::endl;
@@ -133,7 +130,7 @@ public:
       my_log_file_ << "Start Log..." << std::endl;
 
       // launch a work thread
-      boost::thread thread(&myapp::worker, this);
+      std::thread thread(&myapp::worker, this);
 
       context_.find<application::wait_for_termination_request>()->wait();
 
@@ -178,20 +175,18 @@ private:
 
 bool setup(application::context& context)
 {
-   strict_lock<application::aspect_map> guard(context);
+   std::unique_lock<application::aspect_map> guard(context);
 
-   boost::shared_ptr<application::args> myargs
-      = context.find<application::args>(guard);
+   auto myargs = context.find<application::args>(guard);
 
-   boost::shared_ptr<application::path> mypath
-      = context.find<application::path>(guard);
+   auto mypath = context.find<application::path>(guard);
 
 // provide setup for windows service
 #if defined(BOOST_WINDOWS_API)
 #if !defined(__MINGW32__)
 
    // get our executable path name
-   boost::filesystem::path executable_path_name = mypath->executable_path_name();
+   std::filesystem::path executable_path_name = mypath->executable_path_name();
 
    // define our simple installation schema options
    po::options_description install("service options");
@@ -256,10 +251,10 @@ int main(int argc, char *argv[])
    // my server aspects
 
    app_context.insert<application::path>(
-      boost::make_shared<application::path>());
+      std::make_shared<application::path>());
 
    app_context.insert<application::args>(
-      boost::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    // check if we need setup
 
@@ -277,7 +272,7 @@ int main(int argc, char *argv[])
    if(ec)
    {
       std::cout << "[E] " << ec.message()
-         << " <" << ec.value() << "> " << std::cout;
+         << " <" << ec.value() << "> " << std::endl;
    }
 
    return result;

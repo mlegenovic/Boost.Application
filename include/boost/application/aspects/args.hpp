@@ -1,17 +1,7 @@
-// args.hpp  -----------------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
-
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 14-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
 
 #ifndef BOOST_APPLICATION_ARGS_ASPECT_HPP
 #define BOOST_APPLICATION_ARGS_ASPECT_HPP
@@ -19,7 +9,7 @@
 #include <boost/application/config.hpp>
 #include <boost/application/base_type.hpp>
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief This aspect class handle application args in more friedly way.
@@ -101,7 +91,6 @@ namespace boost { namespace application {
    typedef args_<character_types::char_type> args;
    // wchar_t / char
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_ARGS_ASPECT_HPP
-

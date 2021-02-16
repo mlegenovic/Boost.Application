@@ -10,8 +10,6 @@
 // can be compiled.
 //
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 
@@ -37,9 +35,8 @@ public:
    }
 
 private:
-   application::context& context_;
+  application::context& context_;
 
 };
 
 //]
-

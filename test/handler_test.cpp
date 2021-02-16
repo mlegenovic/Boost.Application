@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
@@ -21,7 +21,7 @@ struct handler_test
    }
 };
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(_handler_test_)
 {
    handler_test app_handler_test;
    application::context app_context;
@@ -34,8 +34,8 @@ int test_main(int argc, char** argv)
    }
 
    {
-      application::handler<>::callback cb = boost::bind(
-         &handler_test::handler, &app_handler_test);
+      application::handler<>::callback cb =
+         [&app_handler_test] { return app_handler_test.handler(); };
 
       application::handler<> h(cb);
       BOOST_CHECK(h.is_valid());
@@ -46,8 +46,8 @@ int test_main(int argc, char** argv)
    }
 
    {
-      application::handler<>::callback cb = boost::bind(
-         &handler_test::handler, &app_handler_test);
+      application::handler<>::callback cb =
+         [&app_handler_test] { return app_handler_test.handler(); };
 
       application::handler<> h;
       h.set(cb);
@@ -58,10 +58,4 @@ int test_main(int argc, char** argv)
       BOOST_CHECK(h.get(hcb));
       BOOST_CHECK((*hcb)());
    }
-
-   return 0;
 }
-
-
-
-

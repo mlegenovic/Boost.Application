@@ -1,38 +1,21 @@
-// server_application_impl.hpp -----------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 22-10-2013 dd-mm-yyyy - Initial Release
-
-/*
----  0---|--- 10---|--- 20---|--- 30---|--- 40---|--- 50---|--- 60---|--- 70---|--- 80---|--- 90---|
-123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|
-*/
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_SERVER_APPLICATION_IMPL_HPP
 #define BOOST_APPLICATION_SERVER_APPLICATION_IMPL_HPP
 
-#include <boost/application/config.hpp>
 #include <boost/application/context.hpp>
 #include <boost/application/detail/application_impl.hpp>
 #include <boost/application/signal_binder.hpp>
 
-#include <boost/assert.hpp>
-#include <boost/function.hpp>
-
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <functional>
+#include <csignal>
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno>
+#include <utility>
 
 #include <syslog.h>
 #include <fcntl.h>
@@ -40,7 +23,7 @@
 
 #include <sys/stat.h>
 
-namespace boost { namespace application {
+namespace boost::application::detail {
 
    /*
       Note about debug code on GDB
@@ -76,21 +59,21 @@ namespace boost { namespace application {
    public:
 
       // callback for app code
-      typedef csbl::function< int (void) > mainop;
+      typedef std::function< int (void) > mainop;
 
       // string types to be used internaly to handle unicode on windows
       typedef CharType char_type;
       typedef std::basic_string<char_type> string_type;
 
-      server_application_impl_(const mainop &main, signal_binder &sb,
+      server_application_impl_(mainop main, signal_binder &sb,
                                application::context &context, boost::system::error_code& ec)
          : application_impl(context)
-         , main_(main)
+         , main_(std::move(main))
       {
          // ver 1
 #if defined( USE_DAEMONIZE_VER_1 )
          process_id_ = daemonize(ec);
-#else        
+#else
          if(daemon(0, 0, ec) < 0)
          {
             ec = last_error_code();
@@ -99,7 +82,7 @@ namespace boost { namespace application {
          
          process_id_ = getpid();
 #endif
-         
+
          sb.start(); // need be started after daemonize
       }
 
@@ -164,7 +147,7 @@ namespace boost { namespace application {
 
          return status;
       }
-      
+
       int daemon(int nochdir, int noclose, boost::system::error_code &ec)
       {
          int status = 0;
@@ -260,8 +243,8 @@ namespace boost { namespace application {
 
          // Ensure future opens won't allocate controlling TTYs.
 
-         struct rlimit rl;
-         struct sigaction sa;
+         struct rlimit rl{};
+         struct sigaction sa{};
 
          sa.sa_handler = SIG_IGN;
          sigemptyset(&sa.sa_mask);
@@ -336,7 +319,6 @@ namespace boost { namespace application {
    typedef server_application_impl_<character_types::char_type> server_application_impl;
    // wchar_t / char
 
-}} // boost::application
+} // boost::application::detail
 
 #endif // BOOST_APPLICATION_SERVER_APPLICATION_IMPL_HPP
-

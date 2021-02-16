@@ -14,15 +14,12 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <fstream>
+#include <thread>
+#include <chrono>
 
 #include <boost/application.hpp>
-#include <boost/uuid/string_generator.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
 
 using namespace boost::application;
 
@@ -45,7 +42,7 @@ public:
    {
       while(1)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(2));
+         std::this_thread::sleep_for(std::chrono::seconds(2));
          std::cout << "running" << std::endl;
       }
    }
@@ -56,8 +53,8 @@ public:
       std::cout << "operator()" << std::endl;
 	  
       // launch a work thread
-      boost::thread thread(boost::bind(&myapp::work_thread, this));
-	  
+      std::thread thread([this] { work_thread(); });
+
       context_.find<wait_for_termination_request>()->wait();
 
       return 0;
@@ -75,11 +72,10 @@ class my_signal_manager : public signal_manager
 public:
 
    /*<< Customize SIGNALS bind >>*/
-   my_signal_manager(context &context)
+   explicit my_signal_manager(context &context)
       : signal_manager(context)
    {
-      handler<>::callback cb
-         = boost::bind(&my_signal_manager::stop, this);
+      handler<>::callback cb = [this] { return stop(); };
 
       // define my own signal / handler
 #if defined( BOOST_WINDOWS_API )
@@ -94,7 +90,6 @@ public:
    /*<< Define signal callback >>*/
    bool stop()
    {
-      BOOST_APPLICATION_FEATURE_SELECT
 
 #if defined( BOOST_WINDOWS_API )
       std::cout << "exiting..." << std::endl;
@@ -106,8 +101,7 @@ public:
       my_log_file.close();
 #endif
 
-      shared_ptr<wait_for_termination_request> th 
-         = context_.find<wait_for_termination_request>();
+      auto th = context_.find<wait_for_termination_request>();
 
       th->proceed();
 
@@ -118,15 +112,15 @@ public:
 
 // main
 
-int main(int argc, char *argv[])
-{   
+int main(int /*argc*/, char */*argv*/[])
+{
    context app_context;
    myapp app(app_context);
 
    // we will customize our signals behaviour
    /*<< Instantiate your custon signal manager. >>*/
    my_signal_manager sm(app_context);
-   
+
 #if defined( BOOST_WINDOWS_API )
    /*<< Pass 'custon signal manager (sm)' to launch function. >>*/
    return launch<common>(app, sm, app_context);

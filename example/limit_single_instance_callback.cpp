@@ -14,12 +14,9 @@
 
 // -----------------------------------------------------------------------------
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-
 #include <iostream>
 #include <boost/application.hpp>
 #include <boost/uuid/string_generator.hpp>
-#include <boost/bind.hpp>
 
 using namespace boost;
 
@@ -36,18 +33,15 @@ public:
    // param
    int operator()()
    {
-      boost::shared_ptr<application::args> args =
-         context_.find<application::args>();
+      auto args = context_.find<application::args>();
       
       if(args)
       {
-         std::vector<std::string> &arg_vector = 
-            args->arg_vector();
+         const auto &arg_vector = args->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
       }
 
@@ -85,7 +79,7 @@ private:
 
 // main
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char */*argv*/[])
 {   
    application::context app_context;
    myapp app(app_context);
@@ -100,13 +94,13 @@ int main(int argc, char *argv[])
       = boost::bind(&myapp::instace_aready_running, &app);
 
    app_context.insert<application::limit_single_instance>(
-      boost::make_shared<application::limit_single_instance_default_behaviour>(appuuid, cb));
+      std::make_shared<application::limit_single_instance_default_behaviour>(appuuid, cb));
    */
 
    // way 2
    app_context.insert<application::limit_single_instance>(
-      boost::make_shared<application::limit_single_instance_default_behaviour>(appuuid, 
-         application::handler<bool>::make_callback(app, &myapp::instace_aready_running)));
+      std::make_shared<application::limit_single_instance_default_behaviour>(
+         appuuid, [&app] { return app.instace_aready_running(); }));
 
    return application::launch<application::common>(app, app_context);
 }

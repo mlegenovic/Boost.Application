@@ -13,7 +13,7 @@
 #include <boost/asio.hpp>
 
 #if defined(BOOST_POSIX_API)
-#   include <errno.h>
+#   include <cerrno>
 #elif defined(BOOST_WINDOWS_API)
 #   include <windows.h>
 #endif
@@ -22,7 +22,7 @@
 #   pragma once
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    // BOOST_APPLICATION_LAST_ERROR
 
@@ -62,7 +62,6 @@ namespace boost { namespace application {
          boost::system::system_category());
    }
 
-}}// boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_SYSTEM_ERROR_HPP
-

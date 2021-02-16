@@ -1,17 +1,7 @@
-// base_type.hpp -------------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
-
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 04-03-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
 
 #ifndef BOOST_APPLICATION_BASE_TYPE_HPP
 #define BOOST_APPLICATION_BASE_TYPE_HPP
@@ -19,7 +9,7 @@
 // app
 #include <boost/application/config.hpp>
 
-namespace boost { namespace application {
+namespace boost::application {
 
    // use it if you want indicate to 'launch' that 'CustomType' is not necessary
    // int launch(Application& app, CustomType& ct, ...
@@ -70,7 +60,7 @@ namespace boost { namespace application {
       typedef std::basic_string<char_type> string_type;
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_BASE_TYPE_HPP
 

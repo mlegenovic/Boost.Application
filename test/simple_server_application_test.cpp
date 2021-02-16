@@ -9,26 +9,22 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
 class myapp
 {
 public:
-   myapp(application::context& context)
-      : context_(context) { }
+   myapp(application::context&) { }
    
    int operator()()
    {
       return 0;
    }
-   
-private:
-   application::context& context_;
 };
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(simple_server_application_test)
 {   
    application::context app_context; 
    myapp app(app_context);
@@ -46,8 +42,4 @@ int test_main(int argc, char** argv)
 #else
    BOOST_CHECK(ret == 0);
 #endif
-
-   return 0;
 }
-
-

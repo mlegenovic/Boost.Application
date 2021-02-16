@@ -1,27 +1,17 @@
-// wait_for_termination_request_impl.hpp  ------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2013 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 15-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_IMPL_HPP
 #define BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_IMPL_HPP
 
-#include <stdio.h>
-#include <signal.h>
+#include <cstdio>
+#include <csignal>
 
 #include <boost/application/aspects/selfpipe.hpp>
 
-namespace boost { namespace application {
+namespace boost::application::detail {
 
 #if defined( USE_POSIX_WAIT_FOR_TERMINATION_REQUEST_YELD_BASED )
    class wait_for_termination_request_impl : noncopyable
@@ -80,9 +70,12 @@ namespace boost { namespace application {
       }
    };
 #else // DRFAULT WAY
-   class wait_for_termination_request_impl : noncopyable
+   class wait_for_termination_request_impl
    {
    public:
+      wait_for_termination_request_impl() = default;
+      wait_for_termination_request_impl(const wait_for_termination_request_impl&) = delete;
+      wait_for_termination_request_impl& operator=(const wait_for_termination_request_impl&) = delete;
 
       // will wait for termination request
       void wait()
@@ -110,7 +103,6 @@ namespace boost { namespace application {
    };
 #endif
 
-}} // boost::application
+} // boost::application::detail
 
 #endif // BOOST_APPLICATION_WAIT_FOR_TERMINATION_REQUEST_IMPL_HPP
-

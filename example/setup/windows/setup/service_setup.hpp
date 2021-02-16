@@ -20,8 +20,7 @@
 #include <boost/application/config.hpp>
 
 // boost
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 #include <vector>
 
 //
@@ -240,9 +239,9 @@ namespace boost { namespace application { namespace example {
       // This method uninstall a given service (by name) on current machine
       void uninstall_service(boost::system::error_code &ec)
       {
-         boost::filesystem::path path(service_path_name_);
+         std::filesystem::path path(service_path_name_);
 
-         if(!boost::filesystem::exists(path))
+         if(!std::filesystem::exists(path))
          {
             ec = boost::system::error_code(2, boost::system::system_category());
             return;
@@ -360,9 +359,9 @@ namespace boost { namespace application { namespace example {
       // this method install a given service (by name) on current machine
       void install_service(boost::system::error_code &ec)
       {
-         boost::filesystem::path path(service_path_name_);
+         std::filesystem::path path(service_path_name_);
 
-         if(!boost::filesystem::exists(path))
+         if(!std::filesystem::exists(path))
          {
             ec = boost::system::error_code(2, boost::system::system_category());
             return;
@@ -474,7 +473,7 @@ namespace boost { namespace application { namespace example {
       // Note: if returns 5 (Access is denied) - you need run app as admin.
       void register_application(boost::system::error_code &ec)
       {
-         boost::filesystem::path path(service_path_name_);
+         std::filesystem::path path(service_path_name_);
 
          std::basic_string<char_type> sub_key, path_entry, default_entry;
 

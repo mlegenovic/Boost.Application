@@ -1,25 +1,12 @@
-// status.hpp  ---------------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 14-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_STATUS_ASPECT_HPP
 #define BOOST_APPLICATION_STATUS_ASPECT_HPP
 
-// appication
-#include <boost/application/config.hpp>
-
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief This aspect class is used internaly by applications types (modes)
@@ -50,7 +37,7 @@ namespace boost { namespace application {
        *
        * \param state The state of application.
        */
-      status(application_state state)
+      explicit status(application_state state)
          :  application_state_(state) {}
 
       /*!
@@ -87,7 +74,6 @@ namespace boost { namespace application {
 
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_STATUS_ASPECT_HPP
-

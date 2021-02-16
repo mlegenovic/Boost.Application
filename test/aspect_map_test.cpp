@@ -8,8 +8,10 @@
 #define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
 
 #include <iostream>
+#include <memory>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/thread/thread.hpp>
 
 using namespace boost;
 
@@ -65,20 +67,20 @@ public:
 // Reduction for my_msg_aspect_test
 //
 
-shared_ptr<my_msg_aspect_test> my_msg_aspect_test_reduction_function(
-   shared_ptr<my_msg_aspect_test> lhs, shared_ptr<my_msg_aspect_test> rhs)
+std::shared_ptr<my_msg_aspect_test> my_msg_aspect_test_reduction_function(
+   std::shared_ptr<my_msg_aspect_test> lhs, std::shared_ptr<my_msg_aspect_test> rhs)
 {
-   shared_ptr<my_msg_aspect_test> temp(boost::make_shared<my_msg_aspect_test>(""));
+   std::shared_ptr<my_msg_aspect_test> temp(std::make_shared<my_msg_aspect_test>(""));
 
    temp->set(lhs->say_hi() + " : " + rhs->say_hi());
 
    return temp;
 }
 
-shared_ptr<my_sum_aspect_test> my_sum_aspect_test_reduction_function(
-   shared_ptr<my_sum_aspect_test> lhs, shared_ptr<my_sum_aspect_test> rhs)
+std::shared_ptr<my_sum_aspect_test> my_sum_aspect_test_reduction_function(
+   std::shared_ptr<my_sum_aspect_test> /*lhs*/, std::shared_ptr<my_sum_aspect_test> rhs)
 {
-   shared_ptr<my_sum_aspect_test> temp(boost::make_shared<my_sum_aspect_test>(1, 1));
+   std::shared_ptr<my_sum_aspect_test> temp(std::make_shared<my_sum_aspect_test>(1, 1));
 
    temp->add(rhs->get());
 
@@ -113,9 +115,9 @@ public:
    {
       for(int i = 0; i < LOOP_INTERACTIONS; i++)
       { // atomic
-         strict_lock<application::aspect_map> guard(my_aspect_map_);
-         
-         shared_ptr<my_msg_aspect_test> res = my_aspect_map_.find<my_msg_aspect_test>(guard);
+         std::unique_lock<application::aspect_map> guard(my_aspect_map_);
+
+         auto res = my_aspect_map_.find<my_msg_aspect_test>(guard);
 
          if(res)
          {
@@ -133,9 +135,9 @@ public:
    {
       for(int i = 0; i < LOOP_INTERACTIONS; i++)
       { // atomic
-         strict_lock<application::aspect_map> guard(my_aspect_map_);
+         std::unique_lock<application::aspect_map> guard(my_aspect_map_);
 
-         my_aspect_map_.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"), guard);
+         my_aspect_map_.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"), guard);
 
          boost::this_thread::sleep(boost::posix_time::milliseconds(i+10));
 
@@ -147,9 +149,9 @@ public:
    {
       for(int i = 0; i < LOOP_INTERACTIONS; i++)
       { // atomic
-         strict_lock<application::aspect_map> guard(my_aspect_map_);
+         std::unique_lock<application::aspect_map> guard(my_aspect_map_);
 
-         my_aspect_map_.insert<my_sum_aspect_test>(boost::make_shared<my_sum_aspect_test>(1,1), guard);
+         my_aspect_map_.insert<my_sum_aspect_test>(std::make_shared<my_sum_aspect_test>(1,1), guard);
 
          boost::this_thread::sleep(boost::posix_time::milliseconds(i+15));
 
@@ -162,13 +164,15 @@ public:
    {
       for(int i = 0; i < LOOP_INTERACTIONS; i++)
       { // atomic
-         strict_lock<application::aspect_map> guard(my_aspect_map_);
+         std::unique_lock<application::aspect_map> guard(my_aspect_map_);
 
          if(!my_aspect_map_.find<my_msg_aspect_test>(guard))
          {
-            my_aspect_map_.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"), guard);
+            my_aspect_map_.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"), guard);
 
             boost::this_thread::sleep(boost::posix_time::milliseconds(i+5));
+
+            my_aspect_map_.erase<my_msg_aspect_test>(guard);
          }
       }
    }
@@ -178,34 +182,34 @@ public:
    {
       for(int i = 0; i < LOOP_INTERACTIONS; i++)
       { // atomic
-         strict_lock<application::aspect_map> guard(my_aspect_map_);
+         std::unique_lock<application::aspect_map> guard(my_aspect_map_);
 
-         shared_ptr<my_msg_aspect_test> a1 = my_aspect_map_.find<my_msg_aspect_test>(guard);
+         auto a1 = my_aspect_map_.find<my_msg_aspect_test>(guard);
 
          if(a1)
          {
             typedef boost::function2<
-               shared_ptr<my_msg_aspect_test> ,
-               shared_ptr<my_msg_aspect_test> ,
-               shared_ptr<my_msg_aspect_test> > reduction;
+               std::shared_ptr<my_msg_aspect_test> ,
+               std::shared_ptr<my_msg_aspect_test> ,
+               std::shared_ptr<my_msg_aspect_test> > reduction;
 
             reduction rf =  &my_msg_aspect_test_reduction_function;
 
-            my_aspect_map_.reduce<my_msg_aspect_test, reduction>(make_shared<my_msg_aspect_test>("HI"), rf, guard);
+            my_aspect_map_.reduce<my_msg_aspect_test, reduction>(std::make_shared<my_msg_aspect_test>("HI"), rf, guard);
          }
 
-         shared_ptr<my_sum_aspect_test> a2 = my_aspect_map_.find<my_sum_aspect_test>(guard);
+         auto a2 = my_aspect_map_.find<my_sum_aspect_test>(guard);
 
          if(a2)
          {
             typedef boost::function2<
-               shared_ptr<my_sum_aspect_test> ,
-               shared_ptr<my_sum_aspect_test> ,
-               shared_ptr<my_sum_aspect_test> > reduction;
+               std::shared_ptr<my_sum_aspect_test> ,
+               std::shared_ptr<my_sum_aspect_test> ,
+               std::shared_ptr<my_sum_aspect_test> > reduction;
 
             reduction rf =  &my_sum_aspect_test_reduction_function;
 
-            my_aspect_map_.reduce<my_sum_aspect_test, reduction>(make_shared<my_sum_aspect_test>(1,1), rf, guard);
+            my_aspect_map_.reduce<my_sum_aspect_test, reduction>(std::make_shared<my_sum_aspect_test>(1,1), rf, guard);
          }
       }
    }
@@ -215,7 +219,7 @@ public:
 // tests
 //
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(aspect_map_test)
 {
    //
    // Internal locking Version.
@@ -231,7 +235,7 @@ int test_main(int argc, char** argv)
    // insert/find/size
    {
       application::aspect_map my_aspect_map;
-      shared_ptr<my_msg_aspect_test> res = my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      auto res = my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       BOOST_CHECK(res.get() == 0);
       BOOST_CHECK(my_aspect_map.size() == 1);
@@ -240,8 +244,8 @@ int test_main(int argc, char** argv)
 
    {
       application::aspect_map my_aspect_map;
-      shared_ptr<my_msg_aspect_test> res1 = my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
-      shared_ptr<my_msg_aspect_test> res2 = my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI HI"));
+      auto res1 = my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
+      auto res2 = my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI HI"));
 
       BOOST_CHECK(res2.get()!=0);
       BOOST_CHECK(res2->say_hi() == "HI");
@@ -249,16 +253,16 @@ int test_main(int argc, char** argv)
       BOOST_CHECK(my_aspect_map.find<my_msg_aspect_test>()->say_hi() == "HI");
    }
 
-   // relace
+   // replace
    {
       application::aspect_map my_aspect_map;
-      shared_ptr<my_msg_aspect_test> res = my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      auto res = my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       BOOST_CHECK(res.get() == 0);
       BOOST_CHECK(my_aspect_map.size() == 1);
       BOOST_CHECK(my_aspect_map.find<my_msg_aspect_test>()->say_hi() == "HI");
 
-      res = my_aspect_map.exchange<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI:HI"));
+      res = my_aspect_map.exchange<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI:HI"));
 
       BOOST_CHECK(res.get() == 0);
       BOOST_CHECK(my_aspect_map.size() == 1);
@@ -268,7 +272,7 @@ int test_main(int argc, char** argv)
    // erase
    {
       application::aspect_map my_aspect_map;
-      shared_ptr<my_msg_aspect_test> res = my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      auto res = my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       BOOST_CHECK(res.get() == 0);
       BOOST_CHECK(my_aspect_map.size() == 1);
@@ -278,21 +282,21 @@ int test_main(int argc, char** argv)
 
       BOOST_CHECK(res.get());
       BOOST_CHECK(my_aspect_map.size() == 0);
-      BOOST_CHECK(my_aspect_map.find<my_msg_aspect_test>() == false);
+      BOOST_CHECK(my_aspect_map.find<my_msg_aspect_test>() == nullptr);
    }
 
    // reduction
    {
       typedef boost::function2<
-         shared_ptr<my_msg_aspect_test> ,
-         shared_ptr<my_msg_aspect_test> ,
-         shared_ptr<my_msg_aspect_test> > reduction;
+         std::shared_ptr<my_msg_aspect_test> ,
+         std::shared_ptr<my_msg_aspect_test> ,
+         std::shared_ptr<my_msg_aspect_test> > reduction;
 
       reduction rf =  &my_msg_aspect_test_reduction_function;
 
       application::aspect_map my_aspect_map;
-      my_aspect_map.insert<my_msg_aspect_test>(make_shared<my_msg_aspect_test>("HI"));
-      my_aspect_map.reduce<my_msg_aspect_test, reduction>(make_shared<my_msg_aspect_test>("HI"), rf);
+      my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
+      my_aspect_map.reduce<my_msg_aspect_test, reduction>(std::make_shared<my_msg_aspect_test>("HI"), rf);
 
       BOOST_CHECK(my_aspect_map.find<my_msg_aspect_test>()->say_hi() == "HI : HI");
    }
@@ -300,7 +304,7 @@ int test_main(int argc, char** argv)
    // size(exists)
    {
       application::aspect_map my_aspect_map;
-      my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       BOOST_CHECK(my_aspect_map.size());
    }
@@ -308,7 +312,7 @@ int test_main(int argc, char** argv)
    // empty
    {
       application::aspect_map my_aspect_map;
-      my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       BOOST_CHECK(my_aspect_map.empty());
    }
@@ -316,7 +320,7 @@ int test_main(int argc, char** argv)
    // clear
    {
       application::aspect_map my_aspect_map;
-      my_aspect_map.insert<my_msg_aspect_test>(boost::make_shared<my_msg_aspect_test>("HI"));
+      my_aspect_map.insert<my_msg_aspect_test>(std::make_shared<my_msg_aspect_test>("HI"));
 
       my_aspect_map.clear();
 
@@ -325,9 +329,4 @@ int test_main(int argc, char** argv)
 
    // concurrent acces test
    parallel_test<100>().wait();
-
-   return 0;
 }
-
-
-

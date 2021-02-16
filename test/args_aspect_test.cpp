@@ -9,22 +9,18 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
-int test_main(int argc, char** argv)
-{   
-   application::args myargs(argc, argv);
+BOOST_AUTO_TEST_CASE(args_aspect_test)
+{
+   application::args myargs(unit_test::framework::master_test_suite().argc,
+                            unit_test::framework::master_test_suite().argv);
 
    BOOST_CHECK(myargs.argc());
-   
+
    const std::vector< std::string > &argvec = myargs.arg_vector();
 
    BOOST_CHECK(argvec.size());
-
-   return 0;
 }
-
-
-

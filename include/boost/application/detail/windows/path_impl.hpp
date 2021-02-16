@@ -9,8 +9,8 @@
 
 #include <boost/application/config.hpp>
 #include <boost/application/system_error.hpp>
-#include <boost/filesystem/path.hpp>
 
+#include <filesystem>
 #include <cstdlib>
 
 #include <boost/detail/winapi/config.hpp>
@@ -29,10 +29,10 @@ namespace boost { namespace application { namespace detail {
 
     class default_path_impl
     {
-        filesystem::path full_path_;
+        std::filesystem::path full_path_;
         
-        static boost::filesystem::path path_from_me(boost::system::error_code &ec) {
-            boost::filesystem::path ret;
+        static std::filesystem::path path_from_me(std::error_code &ec) {
+            std::filesystem::path ret;
             
             // A handle to the loaded module whose path is being requested.
             // If this parameter is NULL, GetModuleFileName retrieves the path of the
@@ -45,7 +45,7 @@ namespace boost { namespace application { namespace detail {
             // In case of ERROR_INSUFFICIENT_BUFFER_ trying to get buffer big enough to store the whole path
             for (unsigned i = 2; i < 129 && ec.value() == ERROR_INSUFFICIENT_BUFFER; i *= 2) {
                 path = new WCHAR[MAX_PATH * i];
-    
+
                 boost::detail::winapi::get_module_file_name(NULL, path, MAX_PATH * i);
                 ec = last_error_code();
     
@@ -56,7 +56,7 @@ namespace boost { namespace application { namespace detail {
             
             if (ec) {
                 // Error other than ERROR_INSUFFICIENT_BUFFER_ occured or failed to allocate buffer big enough
-                return boost::filesystem::path();
+                return std::filesystem::path();
             }
             
             ret = path;
@@ -67,7 +67,7 @@ namespace boost { namespace application { namespace detail {
             return ret;
         }
 
-        static boost::filesystem::path getenv(const char* env_name)
+        static std::filesystem::path getenv(const char* env_name)
         {
     #if defined(_MSC_VER) && _MSC_VER >= 14
             std::vector<char> buf;
@@ -75,7 +75,7 @@ namespace boost { namespace application { namespace detail {
 
             ::getenv_s(&req_size, NULL, 0, env_name);
             if(req_size == 0)
-                return boost::filesystem::path();
+                return std::filesystem::path();
 
             if(buf.size() < req_size)
                 buf.resize(req_size);
@@ -87,11 +87,11 @@ namespace boost { namespace application { namespace detail {
             return buf.data();
     #else
             const char* res = ::getenv(env_name);
-            return res ? res : boost::filesystem::path();
+            return res ? res : std::filesystem::path();
     #endif
         }
 
-        static bool KnownFolderPath( REFKNOWNFOLDERID _Id, filesystem::path &out )
+        static bool KnownFolderPath( REFKNOWNFOLDERID _Id, std::filesystem::path &out )
         {
             PWSTR res = NULL;
             if ( SUCCEEDED( ::SHGetKnownFolderPath( _Id, KF_FLAG_CREATE, NULL, &res ) ) )
@@ -105,12 +105,12 @@ namespace boost { namespace application { namespace detail {
 
     public:
 
-        filesystem::path current_path(void)
+        std::filesystem::path current_path(void)
         {
-           return filesystem::current_path();
+           return std::filesystem::current_path();
         }
 
-        const filesystem::path& location(boost::system::error_code &ec)
+        const std::filesystem::path& location(std::error_code &ec)
         {
             if ( full_path_.empty( ) )
             {
@@ -119,11 +119,11 @@ namespace boost { namespace application { namespace detail {
             return full_path_;
         }
 
-        const filesystem::path& location()
+        const std::filesystem::path& location()
         {
             if ( full_path_.empty( ) )
             {
-                boost::system::error_code ec;
+                std::error_code ec;
 
                 full_path_ = location( ec );
 
@@ -138,36 +138,35 @@ namespace boost { namespace application { namespace detail {
             return full_path_;
         }
     
-        boost::filesystem::path home_path()
+        std::filesystem::path home_path()
         {
-            boost::filesystem::path home( L"." );
+            std::filesystem::path home( L"." );
             KnownFolderPath( FOLDERID_Profile, home );
             return home;
         }
     
-        boost::filesystem::path app_data_path()
+        std::filesystem::path app_data_path()
         {
-            boost::filesystem::path p( L"." );
+            std::filesystem::path p( L"." );
             KnownFolderPath( FOLDERID_LocalAppData, p );
             return p;
         }
     
-        boost::filesystem::path config_path()
+        std::filesystem::path config_path()
         {
-            boost::filesystem::path p( L"." );
+            std::filesystem::path p( L"." );
             KnownFolderPath( FOLDERID_RoamingAppData, p );
             return p;
         }
     
-        boost::filesystem::path temp_path()
+        std::filesystem::path temp_path()
         {
-            return boost::filesystem::temp_directory_path();
+            return std::filesystem::temp_directory_path();
         }
     };
 
     
 
-}}} // namespace boost::dll::detail
+}}} // namespace boost::application::detail
 
 #endif // BOOST_APPLICATION_DETAIL_WINDOWS_PATH_FROM_ME_HPP
-

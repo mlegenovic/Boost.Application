@@ -14,8 +14,8 @@
 
 //[tutorialcpps1
 
-int main(int argc, char *argv[])
-{  
+int main(int /*argc*/, char */*argv*/[])
+{
    /*<< Your application context that hold a 'aspect' pool >>*/
    application::context app_context;
 
@@ -27,4 +27,3 @@ int main(int argc, char *argv[])
 }
 
 //]
-

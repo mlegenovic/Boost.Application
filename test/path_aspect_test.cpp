@@ -9,13 +9,13 @@
 
 #include <iostream>
 #include <boost/application.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
-int test_main(int argc, char** argv)
-{   
-   filesystem::path module_path_name;
+BOOST_AUTO_TEST_CASE(path_aspect_test)
+{
+   std::filesystem::path module_path_name;
 
 #if defined( BOOST_WINDOWS_API )
    wchar_t module_name[MAX_PATH];
@@ -25,7 +25,7 @@ int test_main(int argc, char** argv)
       module_path_name = module_name;
    }
 #elif defined( BOOST_POSIX_API )
-   std::string command = argv[0];
+   std::string command = unit_test::framework::master_test_suite().argv[0];
    char resolved_path[PATH_MAX];
 
    // realpath -returns the canonicalized absolute pathname
@@ -38,21 +38,21 @@ int test_main(int argc, char** argv)
    application::path path;
 
    {
-      BOOST_CHECK(filesystem::current_path() == path.current_path());
+      BOOST_CHECK(std::filesystem::current_path() == path.current_path());
    }
    
    {
-      filesystem::path module_path(module_path_name);
+      std::filesystem::path module_path(module_path_name);
       BOOST_CHECK(module_path.stem() == path.executable_name());
    }
 
    {
-      filesystem::path module_path(module_path_name);
+      std::filesystem::path module_path(module_path_name);
       BOOST_CHECK(module_path.filename() == path.executable_full_name());
    }
 
    {
-      filesystem::path module_path(module_path_name);
+      std::filesystem::path module_path(module_path_name);
       BOOST_CHECK(module_path.parent_path() == path.executable_path());
    }
 
@@ -77,7 +77,4 @@ int test_main(int argc, char** argv)
 
    isempty = path.temp_path().string();
    BOOST_CHECK(isempty.size());
- 
-   return 0;
 }
-

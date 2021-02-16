@@ -11,7 +11,7 @@
 #include <boost/application.hpp>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/application/auto_app.hpp>
-#include <boost/test/minimal.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace boost;
 
@@ -25,17 +25,15 @@ public:
    int operator()() {
       std::cout << "myapp1" << std::endl;
 
-      application::csbl::shared_ptr<application::args> myargs 
-         = context_.find<application::args>();
+      auto myargs = context_.find<application::args>();
 
       if (myargs)
       {
          const std::vector<std::string> &arg_vector = myargs->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
 
          BOOST_CHECK(arg_vector.size());
@@ -51,17 +49,15 @@ public:
    int operator()() {
       std::cout << "myapp2" << std::endl;
 
-      application::csbl::shared_ptr<application::args> myargs 
-         =  application::global_context::get()->find<application::args>();
+      auto myargs = application::global_context::get()->find<application::args>();
 
       if (myargs)
       {
          const std::vector<std::string> &arg_vector = myargs->arg_vector();
 
          // only print args on screen
-         for(std::vector<std::string>::const_iterator it = arg_vector.begin(); 
-            it != arg_vector.end(); ++it) {
-            std::cout << *it << std::endl;
+         for(const auto& arg : arg_vector) {
+            std::cout << arg << std::endl;
          }
 
          BOOST_CHECK(arg_vector.size());
@@ -71,9 +67,12 @@ public:
    }
 };
 
-int test_main(int argc, char** argv)
+BOOST_AUTO_TEST_CASE(auto_app_test)
 {   
    system::error_code ec;
+
+   auto& argc = unit_test::framework::master_test_suite().argc;
+   auto& argv = unit_test::framework::master_test_suite().argv;
 
    BOOST_CHECK(!(application::auto_app<application::common, myapp1>::start(ec)));
    BOOST_CHECK(!(application::auto_app<application::common, myapp1>::start()));
@@ -116,9 +115,4 @@ int test_main(int argc, char** argv)
    BOOST_CHECK(!(application::launch<application::auto_app<application::common, myapp2, application::global_context> >(argc, argv, boost::uuids::string_generator()("{2F66E4AD-ECA5-475D-8784-4BAA329EF9F1}"))));
    BOOST_CHECK(!(application::launch<application::auto_app<application::common, myapp1, application::context> >(argc, argv, boost::uuids::string_generator()("{2F66E4AD-ECA5-475D-8784-4BAA329EF9F1}"))));
    */
-
-   return 0;
 }
-
-
-

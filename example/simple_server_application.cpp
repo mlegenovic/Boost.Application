@@ -44,9 +44,6 @@
 // Stoping my application...
 //
 
-#define BOOST_APPLICATION_FEATURE_NS_SELECT_BOOST
-// #define BOOST_APPLICATION_FEATURE_NS_SELECT_STD
-
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -61,8 +58,6 @@ namespace po = boost::program_options;
 using namespace boost;
 
 // my application code
-
-BOOST_APPLICATION_FEATURE_SELECT
 
 class myapp
 {
@@ -88,22 +83,20 @@ public:
       my_log_file_ << "-----------------------------" << std::endl;
 
       // only print args on screen
-      for(std::vector<std::string>::iterator it = arg_vector.begin();
-         it != arg_vector.end(); ++it) {
-         my_log_file_ << *it << std::endl;
+      for(const auto& arg : arg_vector) {
+         my_log_file_ << arg << std::endl;
       }
 
       my_log_file_ << "-----------------------------" << std::endl;
 
       // run logic
 
-      application::csbl::shared_ptr<application::status> st =
-         context_.find<application::status>();
+      auto st = context_.find<application::status>();
 
       int count = 0;
       while(st->state() != application::status::stopped)
       {
-         boost::this_thread::sleep(boost::posix_time::seconds(1));
+         std::this_thread::sleep_for(std::chrono::seconds(1));
 
          if(st->state() == application::status::paused)
             my_log_file_ << count++ << ", paused..." << std::endl;
@@ -122,7 +115,7 @@ public:
       my_log_file_ << "Start Log..." << std::endl;
 
       // launch a work thread
-      application::csbl::thread thread(&myapp::worker, this);
+      std::thread thread(&myapp::worker, this);
 
       context_.find<application::wait_for_termination_request>()->wait();
 
@@ -168,20 +161,18 @@ private:
 
 bool setup(application::context& context)
 {
-   strict_lock<application::aspect_map> guard(context);
+   std::unique_lock<application::aspect_map> guard(context);
 
-   application::csbl::shared_ptr<application::args> myargs
-      = context.find<application::args>(guard);
+   auto myargs = context.find<application::args>(guard);
 
-   application::csbl::shared_ptr<application::path> mypath
-      = context.find<application::path>(guard);
+   auto mypath = context.find<application::path>(guard);
 
 // provide setup for windows service
 #if defined(BOOST_WINDOWS_API)
 #if !defined(__MINGW32__)
 
    // get our executable path name
-   boost::filesystem::path executable_path_name = mypath->executable_path_name();
+   std::filesystem::path executable_path_name = mypath->executable_path_name();
 
    // define our simple installation schema options
    po::options_description install("service options");
@@ -237,22 +228,20 @@ bool setup(application::context& context)
 
 int main(int argc, char *argv[])
 {
-
    application::context app_context;
    myapp app(app_context);
 
    // my server aspects
 
    app_context.insert<application::args>(
-      application::csbl::make_shared<application::args>(argc, argv));
+      std::make_shared<application::args>(argc, argv));
 
    // add termination handler
 
-   application::handler<>::callback termination_callback
-      = boost::bind(&myapp::stop, &app);
+   application::handler<>::callback termination_callback = [&app] { return app.stop(); };
 
    app_context.insert<application::termination_handler>(
-      application::csbl::make_shared<application::termination_handler_default_behaviour>(termination_callback));
+      std::make_shared<application::termination_handler_default_behaviour>(termination_callback));
 
    // To  "pause/resume" works, is required to add the 2 handlers.
 
@@ -264,7 +253,7 @@ int main(int argc, char *argv[])
       = boost::bind(&myapp::pause, &app);
 
    app_context.insert<application::pause_handler>(
-      application::csbl::make_shared<application::pause_handler_default_behaviour>(pause_callback));
+      std::make_shared<application::pause_handler_default_behaviour>(pause_callback));
 
    // windows only : add resume handler
 
@@ -272,7 +261,7 @@ int main(int argc, char *argv[])
       = boost::bind(&myapp::resume, &app);
 
    app_context.insert<application::resume_handler>(
-      application::csbl::make_shared<application::resume_handler_default_behaviour>(resume_callback));
+      std::make_shared<application::resume_handler_default_behaviour>(resume_callback));
 
 #endif
 

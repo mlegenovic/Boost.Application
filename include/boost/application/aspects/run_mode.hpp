@@ -1,25 +1,12 @@
-// run_mode.hpp  -------------------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2014 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 14-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_RUN_MODE_ASPECT_HPP
 #define BOOST_APPLICATION_RUN_MODE_ASPECT_HPP
 
-// appication
-#include <boost/application/config.hpp>
-
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief This aspect class is used internaly by applications types (modes)
@@ -36,7 +23,7 @@ namespace boost { namespace application {
        *
        * \param run_mode The mode of application.
        */
-      run_mode(int run_mode)
+      explicit run_mode(int run_mode)
          : application_run_mode_(run_mode) {}
 
       /*!
@@ -45,7 +32,7 @@ namespace boost { namespace application {
        * \return the mode of application.
        *
        */
-      int mode() {
+      int mode() const {
          return application_run_mode_;
       }
 
@@ -69,7 +56,6 @@ namespace boost { namespace application {
 
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_RUN_MODE_ASPECT_HPP
-

@@ -1,24 +1,15 @@
-// common_application.hpp ----------------------------------------------------//
-// -----------------------------------------------------------------------------
-
 // Copyright 2011-2013 Renato Tegon Forti
 
 // Distributed under the Boost Software License, Version 1.0.
 // See http://www.boost.org/LICENSE_1_0.txt
 
-// -----------------------------------------------------------------------------
-
-// Revision History
-// 10-10-2013 dd-mm-yyyy - Initial Release
-
-// -----------------------------------------------------------------------------
-
 #ifndef BOOST_APPLICATION_COMMON_APPLICATION_HPP
 #define BOOST_APPLICATION_COMMON_APPLICATION_HPP
 
+#include <memory>
+
 #include <boost/application/config.hpp>
 #include <boost/application/context.hpp>
-#include <boost/application/detail/csbl.hpp>
 #include <boost/application/application_mode_register.hpp>
 
 // internal aspects
@@ -36,7 +27,7 @@
 #   error "Sorry, no boost application are available for this platform."
 #endif
 
-namespace boost { namespace application {
+namespace boost::application {
 
    /*!
     * \brief This class hold a 'common' application mode system.
@@ -88,8 +79,8 @@ namespace boost { namespace application {
       common(Application& myapp, SignalManager &sm,
          application::context &context,
          boost::system::error_code& ec)
-         : impl_(new common_application_impl(
-                 boost::bind(&Application::operator(), &myapp), sm,
+         : impl_(new detail::common_application_impl(
+                 [&myapp]() { return myapp(); }, sm,
                  context, ec)) {
          if(ec) return;
 
@@ -97,19 +88,19 @@ namespace boost { namespace application {
 
          if(!impl_->get_context().find<run_mode>())
              impl_->get_context().insert<run_mode>(
-               csbl::make_shared<run_mode>(mode()));
+               std::make_shared<run_mode>(mode()));
 
          if(!impl_->get_context().find<status>())
              impl_->get_context().insert<status>(
-               csbl::make_shared<status>(status::running));
+               std::make_shared<status>(status::running));
 
          if(!impl_->get_context().find<process_id>())
               impl_->get_context().insert<process_id>(
-               csbl::make_shared<process_id>());
-               
+               std::make_shared<process_id>());
+
          if(!impl_->get_context().find<path>())
               impl_->get_context().insert<path>(
-               csbl::make_shared<path>());
+               std::make_shared<path>());
       }
 
       /*!
@@ -130,10 +121,10 @@ namespace boost { namespace application {
 
    private:
 
-      csbl::shared_ptr<common_application_impl> impl_;
+      std::shared_ptr<detail::common_application_impl> impl_;
    };
 
-}} // boost::application
+} // boost::application
 
 #endif // BOOST_APPLICATION_COMMON_APPLICATION_HPP
 
