@@ -1,6 +1,6 @@
 add_compile_definitions(BOOST_TEST_DYN_LINK)
 
-link_libraries(Boost::unit_test_framework Boost::thread rt)
+link_libraries(Boost::unit_test_framework Boost::thread rt stdc++fs)
 
 macro(add_test_module test_module_name)
     add_executable(${test_module_name} ${test_module_name}.cpp ${ARGN})

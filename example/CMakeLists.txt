@@ -1,6 +1,6 @@
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-link_libraries(Boost::thread rt)
+link_libraries(Boost::thread rt stdc++fs)
 
 add_executable(limit_single_instance limit_single_instance.cpp)
 add_executable(limit_single_instance_boost_interprocess_named_mutex limit_single_instance_boost_interprocess_named_mutex.cpp)

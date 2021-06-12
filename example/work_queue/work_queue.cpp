@@ -14,6 +14,7 @@
 #include <boost/timer/timer.hpp>
 
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include <utility>
 #include <vector>
@@ -28,7 +29,7 @@ using matrix_type = std::vector<std::vector<double>>;
 
 // worker class that calculate gaussian blur
 // http://en.wikipedia.org/wiki/Gaussian_blur
-template< int kernelRadius = 3> 
+template< int kernelRadius = 3>
 struct gaussian_blur
 {
    using callback = std::function<void(const matrix_type&)>;
@@ -46,7 +47,7 @@ struct gaussian_blur
 
       boost::timer::cpu_times const elapsed_times(timer.elapsed());
 
-      std::cout 
+      std::cout
          << "gaussian_blur takes:"
          <<  format(elapsed_times, 9)
          << ", for size: "
@@ -82,7 +83,7 @@ protected:
          }
       }
 
-      // normalize kernel, or the image becomes dark 
+      // normalize kernel, or the image becomes dark
       for (auto & row : kernel2d)
          for (double & col : row)
             col /= sum;
@@ -164,8 +165,7 @@ private:
    int task_count_;
 
    application::context& context_;
-   
-}; // myapp 
+}; // myapp
 
 int main(int /*argc*/, char */*argv*/[])
 {
